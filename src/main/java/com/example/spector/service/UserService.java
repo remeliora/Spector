@@ -28,13 +28,16 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException(String.format("User '%s' not found", username)));
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
         return user;
     }
 
     public boolean addUser (User user) {
-        Optional<User> userFromDB = userRepository.findByUsername(user.getUsername());
+        User userFromDB = userRepository.findByUsername(user.getUsername());
 
         if (userFromDB != null) {
             return false;
@@ -50,13 +53,13 @@ public class UserService implements UserDetailsService {
 
     public List<User> findAll() { return userRepository.findAll(); }
 
-    public void saveUser(User user, String username, Map<String, Object> form) {
+    public void saveUser(User user, String username, Map<String, String> form) {
         user.setUsername(username);
 
-        Set<String> roles = Arrays
-                .stream(Role.values())
+        Set<String> roles = Arrays.stream(Role.values())
                 .map(Role::name)
                 .collect(Collectors.toSet());
+
         user.getRoles().clear();
 
         for (String key : form.keySet()) {

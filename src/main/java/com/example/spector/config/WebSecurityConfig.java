@@ -25,7 +25,7 @@ public class WebSecurityConfig {
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/", "/registration", "/static/**", "/activate/*").permitAll()
+                .requestMatchers("/", "/registration").permitAll()
                 .anyRequest().authenticated()
         )
                 .formLogin((form) -> form
@@ -40,8 +40,8 @@ public class WebSecurityConfig {
     @Bean
     protected UserDetailsService userDetailsService() { return userService; }
 
-    @Bean
-    public void configuration(AuthenticationManagerBuilder auth) throws Exception {
+    @Autowired
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth
                 .userDetailsService(userService)
                 .passwordEncoder(passwordEncoder);

@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> { //Интерфейс в котором
                                                                     //происходит обращение к базе данных
-    Optional<User> findByUsername(String username);
+    User findByUsername(String username);
 }

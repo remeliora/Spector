@@ -26,6 +26,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)    //Значения для поля роли типа String
     private Set<Role> roles;   //Роль
 
+    public boolean isAdmin() {  //Метод для проверки прав пользователя, для доступа к доп. функциям
+        return roles.contains(Role.ENGINEER);
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { return getRoles(); }
 
