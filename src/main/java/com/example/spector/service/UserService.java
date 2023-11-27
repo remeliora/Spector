@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,6 +67,14 @@ public class UserService implements UserDetailsService {
             if (roles.contains(key)) {
                 user.getRoles().add(Role.valueOf(key));
             }
+        }
+
+        userRepository.save(user);
+    }
+
+    public void updateProfile(User user, String password) {
+        if (!StringUtils.isEmpty(password)) {
+            user.setPassword(passwordEncoder.encode(password));
         }
 
         userRepository.save(user);
