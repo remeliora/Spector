@@ -1,38 +1,35 @@
 package com.example.spector.domain;
 
+import com.example.spector.domain.enums.DataType;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 @Entity
-@Table(name = "oidParameters")
+@Table(name = "parameters")
 public class Parameter {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long parameterId;
+    private Long id;
 
-    private String oidNumber;
+    private String name;
 
-    private String oidName;
-
-    private String oidValue;
+    private String address;
 
     // Связь с типом устройства
-    @ManyToOne
-    @JoinColumn(name = "device_type_id", referencedColumnName = "deviceTypeId")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "device_type_id", referencedColumnName = "id")
     private DeviceType deviceType;
-
-    // Связь с устройством
-    @ManyToOne
-    private Device device;
-
-    // Связь со значениями
-    @OneToOne(mappedBy = "parameter")
-    private Value value;
 
     private String metric;
 
-    private int controlLevel;
-
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    private DataType dataType;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL)
+    private Set<Threshold> thresholds;
 }

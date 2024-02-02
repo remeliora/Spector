@@ -7,17 +7,19 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name = "typesOfDev")
+@Table(name = "device_types")
 public class DeviceType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long deviceTypeId;
+    private Long id;
 
-    private String typeName;
+    private String name;
 
-    @OneToMany(mappedBy = "deviceType")
+    private String description;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Parameter> parameters;
 
-    @OneToMany(mappedBy = "deviceType")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Device> devices;
 }

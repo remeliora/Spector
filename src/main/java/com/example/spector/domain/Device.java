@@ -1,5 +1,6 @@
 package com.example.spector.domain;
 
+import com.example.spector.domain.enums.AlarmType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,22 +12,26 @@ import java.util.Set;
 public class Device {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long deviceId;
+    private Long id;
 
-    private String deviceName;
+    private String name;
 
     private String ipAddress;
 
     // Связь с типом устройства
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "device_type_id", referencedColumnName = "id")
     private DeviceType deviceType;
 
-    // Связь с параметрами через тип устройства
-    @ManyToMany
-    @JoinTable(
-            name = "device_parameters",
-            joinColumns = @JoinColumn(name = "device_id"),
-            inverseJoinColumns = @JoinColumn(name = "parameter_id")
-    )
-    private Set<Parameter> parameters;
+    private String description;
+
+    private Integer period;
+
+    @Enumerated(EnumType.STRING)
+    private AlarmType alarmType;
+
+    private Boolean isEnable;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
+    private Set<Threshold> threshold;
 }
