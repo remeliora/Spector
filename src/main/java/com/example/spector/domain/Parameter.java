@@ -4,6 +4,7 @@ import com.example.spector.domain.enums.DataType;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -19,7 +20,7 @@ public class Parameter {
     private String address;
 
     // Связь с типом устройства
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "device_type_id", referencedColumnName = "id")
     private DeviceType deviceType;
 
@@ -30,6 +31,11 @@ public class Parameter {
     @Enumerated(EnumType.STRING)
     private DataType dataType;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parameter", cascade = CascadeType.ALL)
     private Set<Threshold> thresholds;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, address, metric, description, dataType);
+    }
 }

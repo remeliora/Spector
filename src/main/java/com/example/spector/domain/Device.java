@@ -4,6 +4,7 @@ import com.example.spector.domain.enums.AlarmType;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -19,7 +20,7 @@ public class Device {
     private String ipAddress;
 
     // Связь с типом устройства
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "device_type_id", referencedColumnName = "id")
     private DeviceType deviceType;
 
@@ -32,6 +33,11 @@ public class Device {
 
     private Boolean isEnable;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "device", cascade = CascadeType.ALL)
     private Set<Threshold> threshold;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, ipAddress, description, period, isEnable, alarmType);
+    }
 }

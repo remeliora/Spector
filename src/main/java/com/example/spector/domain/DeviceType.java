@@ -3,6 +3,7 @@ package com.example.spector.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -17,9 +18,14 @@ public class DeviceType {
 
     private String description;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Parameter> parameters;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Device> devices;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description);
+    }
 }

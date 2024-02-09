@@ -3,6 +3,8 @@ package com.example.spector.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.Objects;
+
 @Data
 @Entity
 @Table(name = "thresholds")
@@ -21,11 +23,16 @@ public class Threshold {
 
     private Boolean isEnable;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parameter_id", referencedColumnName = "id")
     private Parameter parameter;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "device_id", referencedColumnName = "id")
     private Device device;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, lowValue, highValue, additive, coefficient, isEnable);
+    }
 }

@@ -17,12 +17,12 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
-		<!--Шаблонизатор для минимального Frontend в web-->
+	<!--Шаблонизатор для минимального Frontend в web-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-freemarker</artifactId>
 		</dependency>
-		<!--Библиотека для работы с безопасностью в проекте-->
+	<!--Библиотека для работы с безопасностью в проекте-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -33,7 +33,7 @@
 <!--			<artifactId>spring-boot-starter-thymeleaf</artifactId>-->
 <!--		</dependency>-->
 
-		<!--Работа с Web, быстрый старт-->
+	<!--Работа с Web, быстрый старт-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -44,20 +44,20 @@
 <!--			<artifactId>thymeleaf-extras-springsecurity6</artifactId>-->
 <!--		</dependency>-->
 
-		<!--Инструменты для работы с Spring Boot-->
+	<!--Инструменты для работы с Spring Boot-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
-		<!--Автодополнение кода, Get and Set-->
+	<!--Автодополнение кода, Get and Set-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<!--Библиотека для тестирования проекта-->
+	<!--Библиотека для тестирования проекта-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -68,45 +68,58 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!--Библиотека для работы с базами данных-->
+	<!--Библиотека для работы с базами данных-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		<!--Драйвер для PostgreSQL-->
+	<!--Драйвер для PostgreSQL-->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!--Драйвер для MongoDB-->
+	<!--Драйвер для MongoDB-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
-		<!--Библиотека для работы с протоколом SNMP-->
+	<!--Библиотека для работы с протоколом SNMP-->
 		<dependency>
 			<groupId>org.snmp4j</groupId>
 			<artifactId>snmp4j</artifactId>
 			<version>3.7.7</version>
 		</dependency>
+	<!--Библиотека для создания JSON-файлов-->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.10.1</version>
 		</dependency>
-		<!--Библиотека для консольного мониторинга приложения-->
+	<!--Библиотека для записи данных в структурном филе JSON-файлов-->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.16.1</version> <!-- Указать актуальную версию -->
+		</dependency>
+
+	<!--Библиотека для консольного мониторинга приложения-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		<!--Библиотека для мониторинга с графическим интерфейсом-->
+	<!--Библиотека для мониторинга с графическим интерфейсом-->
 		<dependency>
 			<groupId>de.codecentric</groupId>
 			<artifactId>spring-boot-admin-starter-server</artifactId>
 			<version>2.1.0</version>
 		</dependency>
-		<!--Библиотека для мониторинга с графическим интерфейсом (клиент)-->
+	<!--Библиотека для мониторинга с графическим интерфейсом (клиент)-->
 		<dependency>
 			<groupId>de.codecentric</groupId>
 			<artifactId>spring-boot-admin-starter-client</artifactId>
