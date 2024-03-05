@@ -1,6 +1,6 @@
 package com.example.spector.service;
 
-import com.example.spector.script.SnmpPollingGetAsyn;
+import com.example.spector.script.SnmpPollingGetAsync;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,10 +12,11 @@ public class SnmpPollingService {   //Сервис для взаимодейст
     private DataBaseService dataBaseService;
 
     @Autowired
-    private SnmpPollingGetAsyn snmpPollingGetAsyn;
+    private SnmpPollingGetAsync snmpPollingGetAsync;
+
     @Scheduled(fixedRate = 10000)
     @Async
     public void executePolling() {
-        snmpPollingGetAsyn.pollDevices();
+        snmpPollingGetAsync.pollDevices();
     }
 }

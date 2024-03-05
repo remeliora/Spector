@@ -17,10 +17,6 @@ public class Threshold {
 
     private Double highValue;
 
-    private Double additive;
-
-    private Double coefficient;
-
     private Boolean isEnable;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -33,6 +29,14 @@ public class Threshold {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, lowValue, highValue, additive, coefficient, isEnable);
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Threshold threshold = (Threshold) o;
+        return Objects.equals(id, threshold.id);
     }
 }

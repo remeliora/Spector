@@ -1,1 +1,1 @@
-{"deviceIp":"192.168.1.31","lastPollingTime":[2024,2,6,17,15,23,412057800],"1.3.6.1.2.1.33.1.2.1.0":{"value":2,"berlength":3,"syntax":2,"dynamic":false,"berpayloadLength":3,"syntaxString":"Integer32","exception":false},"deviceId":"3","deviceName":"ИБП GE LP33","1.3.6.1.2.1.33.1.2.5.0":{"value":5370,"berlength":4,"syntax":2,"dynamic":false,"berpayloadLength":4,"syntaxString":"Integer32","exception":false}}
+{"deviceIp":"192.168.1.31","lastPollingTime":"2024-03-05T14:59:03.3775265","upsBatteryStatus":2,"upsBatteryVoltage":536.0,"deviceId":3,"deviceName":"ИБП GE LP33"}

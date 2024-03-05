@@ -117,13 +117,13 @@
 		<dependency>
 			<groupId>de.codecentric</groupId>
 			<artifactId>spring-boot-admin-starter-server</artifactId>
-			<version>2.1.0</version>
+			<version>3.0.2</version>
 		</dependency>
 	<!--Библиотека для мониторинга с графическим интерфейсом (клиент)-->
 		<dependency>
 			<groupId>de.codecentric</groupId>
 			<artifactId>spring-boot-admin-starter-client</artifactId>
-			<version>2.1.0</version>
+			<version>3.0.2</version>
 		</dependency>
 	</dependencies>
 

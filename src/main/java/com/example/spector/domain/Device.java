@@ -38,6 +38,14 @@ public class Device {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, ipAddress, description, period, isEnable, alarmType);
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Device device = (Device) o;
+        return Objects.equals(id, device.id);
     }
 }

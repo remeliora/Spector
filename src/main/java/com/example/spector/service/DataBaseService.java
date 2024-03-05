@@ -1,33 +1,18 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.Device;
-import com.example.spector.domain.DeviceType;
-import com.example.spector.domain.Parameter;
-import com.example.spector.domain.Threshold;
-import com.example.spector.repositories.DeviceRepository;
-import com.example.spector.repositories.DeviceTypeRepository;
-import com.example.spector.repositories.ParameterRepository;
-import com.example.spector.repositories.ThresholdRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.spector.domain.*;
+import com.example.spector.repositories.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class DataBaseService {  //Файл для работы с репозиториями сущностей БД
     private final DeviceTypeRepository deviceTypeRepository;
     private final DeviceRepository deviceRepository;
     private final ParameterRepository parameterRepository;
     private final ThresholdRepository thresholdRepository;
-
-    @Autowired
-    public DataBaseService(DeviceTypeRepository deviceTypeRepository,
-                              DeviceRepository deviceRepository,
-                              ParameterRepository parameterRepository,
-                              ThresholdRepository thresholdRepository) {
-        this.deviceTypeRepository = deviceTypeRepository;
-        this.deviceRepository = deviceRepository;
-        this.parameterRepository = parameterRepository;
-        this.thresholdRepository = thresholdRepository;
-    }
+    private final DeviceDataRepository deviceDataRepository;
 
     public Iterable<DeviceType> getAllDeviceTypes() {
         return deviceTypeRepository.findAll();
@@ -49,6 +34,10 @@ public class DataBaseService {  //Файл для работы с репозит
         return deviceRepository.findByName(name);
     }
 
+    public Iterable<Device> getDeviceByIsEnableTrue() {
+        return deviceRepository.findDeviceByIsEnableTrue();
+    }
+
     public Iterable<Parameter> getParameterByDeviceType(DeviceType deviceType) {
         return parameterRepository.findParameterByDeviceType(deviceType);
     }
@@ -59,5 +48,17 @@ public class DataBaseService {  //Файл для работы с репозит
 
     public Iterable<Threshold> getThresholdsByDevice(Device device) {
         return thresholdRepository.findThresholdByDevice(device);
+    }
+
+    public Iterable<Threshold> getThresholdsByParameterAndIsEnableTrue(Parameter parameter) {
+        return thresholdRepository.findThresholdByParameterAndIsEnableTrue(parameter);
+    }
+
+    public Iterable<DeviceData> getDeviceDataByDeviceName(String deviceName) {
+        return deviceDataRepository.findByDeviceName(deviceName);
+    }
+
+    public boolean existsDeviceDataByDeviceName(String deviceName) {
+        return deviceDataRepository.existsByDeviceName(deviceName);
     }
 }

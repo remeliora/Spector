@@ -17,11 +17,9 @@ import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-public class SnmpGetAsyn {
-//    private static final Logger log = LogManager.getLogger(SnmpGetAsyn.class);
+public class SnmpGetAsync {
+//    private static final Logger log = LogManager.getLogger(SnmpGetAsync.class);
     public static final int DEFAULT_VERSION = SnmpConstants.version2c;
     public static final String DEFAULT_PROTOCOL = "udp";
     public static final int DEFAULT_PORT = 161;
@@ -49,7 +47,7 @@ public class SnmpGetAsyn {
      * @param ip
      * @param community
      */
-    public static void snmpAsynGetList(String ip, String community, List<String> oidList) {
+    public static void snmpAsyncGetList(String ip, String community, List<String> oidList) {
         CommunityTarget target = createDefault(ip, community);
         Snmp snmp = null;
         try {
@@ -79,7 +77,7 @@ public class SnmpGetAsyn {
 //                        log.error("");
                     } else {
                         System.out.println("Received response Success!");
-//                        log.info("Данныые успешно получены!");
+//                        log.info("Данные успешно получены!");
                         for (int i = 0; i < response.size(); i++) {
                             VariableBinding vb = response.get(i);
                             System.out.println(vb.getOid() + " = "
@@ -97,7 +95,7 @@ public class SnmpGetAsyn {
             pdu.setType(PDU.GET);
             snmp.send(pdu, target, null, listener);
 //            log.info("Скрипт начал работу!");
-            System.out.println("asyn send pdu wait for response...");
+            System.out.println("async send pdu wait for response...");
 
             boolean wait = latch.await(30, TimeUnit.SECONDS);
             System.out.println("latch.await =:" + wait);
@@ -106,7 +104,7 @@ public class SnmpGetAsyn {
             snmp.close();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("SNMP Asyn GetList Exception:" + e);
+            System.out.println("SNMP Async GetList Exception:" + e);
         }
     }
 
@@ -134,7 +132,7 @@ public class SnmpGetAsyn {
         //oidList.add(".1.3.6.1.2.1.25.2.3.1.6.3");
 //        oidList.add(".1.3.6.1.2.1.25.2.3.1.6.4");
 
-        SnmpGetAsyn.snmpAsynGetList(ip, community, oidList);
+        SnmpGetAsync.snmpAsyncGetList(ip, community, oidList);
 
     }
 }

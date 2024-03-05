@@ -26,6 +26,10 @@ public class Parameter {
 
     private String metric;
 
+    private Double additive;
+
+    private Double coefficient;
+
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +40,14 @@ public class Parameter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, address, metric, description, dataType);
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Parameter parameter = (Parameter) o;
+        return Objects.equals(id, parameter.id) && Objects.equals(name, parameter.name);
     }
 }

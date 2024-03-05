@@ -11,7 +11,10 @@ import java.util.Set;
 @Repository
 public interface ParameterRepository extends JpaRepository<Parameter, Long> {
     Parameter findByName(String name);
+
     Parameter findByAddress(String address);
+
     Set<Parameter> findParameterByDeviceType(DeviceType deviceType);
+
     Parameter findParameterByMetric(String metric);
 }

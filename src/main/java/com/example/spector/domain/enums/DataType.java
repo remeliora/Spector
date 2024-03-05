@@ -3,8 +3,7 @@ package com.example.spector.domain.enums;
 public enum DataType {
     INTEGER(Integer.class),
     DOUBLE(Double.class),
-    FLOAT(Float.class),
-    BOOLEAN(Boolean.class),
+    LONG(Long.class),
     STRING(String.class);
 
     private final Class<?> javaClass;
