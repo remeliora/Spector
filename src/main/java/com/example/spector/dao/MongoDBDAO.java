@@ -19,7 +19,7 @@ public class MongoDBDAO implements DAO {
     private final DeviceDataService deviceDataService;
 
     @Override
-    public void preparingData(Device device) {
+    public void prepareDAO(Device device) {
         deviceDataService.createDeviceDataCollection(device.getName());
     }
 

@@ -14,9 +14,9 @@ public class SnmpPollingService {   //Сервис для взаимодейст
     @Autowired
     private SnmpPollingGetAsync snmpPollingGetAsync;
 
-    @Scheduled(fixedRate = 10000)
-    @Async
-    public void executePolling() {
-        snmpPollingGetAsync.pollDevices();
-    }
+//    @Scheduled(fixedRate = 10000)
+//    @Async
+//    public void executePolling() {
+//        snmpPollingGetAsync.pollDevices();
+//    }
 }

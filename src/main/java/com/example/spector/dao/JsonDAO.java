@@ -20,7 +20,7 @@ public class JsonDAO implements DAO {
 
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
-    public void preparingData(Device device) {
+    public void prepareDAO(Device device) {
         String filePath = "logs/JsonFiles/" + device.getName() + ".json";
         File deviceFileName = new File(filePath);
 

@@ -17,9 +17,9 @@ public class DAOService {
     @Qualifier("mongoDBDAO")
     private final DAO mongoDBDAO;
 
-    public void prepareData(Device device) {
-        jsonDAO.preparingData(device);
-        mongoDBDAO.preparingData(device);
+    public void prepareDAO(Device device) {
+        jsonDAO.prepareDAO(device);
+        mongoDBDAO.prepareDAO(device);
     }
 
     public void writeData(Device device, Map<String, Object> snmpData) {

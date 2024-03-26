@@ -1,5 +1,8 @@
 package com.example.spector.domain;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,10 +22,14 @@ public class Threshold {
 
     private Boolean isEnable;
 
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parameter_id", referencedColumnName = "id")
     private Parameter parameter;
 
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "device_id", referencedColumnName = "id")
     private Device device;

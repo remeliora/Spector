@@ -1,5 +1,6 @@
 package com.example.spector.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,9 +19,11 @@ public class DeviceType {
 
     private String description;
 
+    @JsonBackReference
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Parameter> parameters;
 
+    @JsonBackReference
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Device> devices;
 

@@ -43,20 +43,22 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
         for (Device device : devicesToPoll) {
             //  Проверка на наличие файла устройства и его создание
-            daoService.prepareData(device);
+            daoService.prepareDAO(device);
 
             // Проверка времени прошедшего с последнего цикла опроса
-            checkLastPollingTime(device);
+            if (!isReadyToPoll(device)) {
+                // Вызов метода snmpPoll для каждого устройства
+                snmpPoll(device);
+            }
         }
     }
 
-    private void checkLastPollingTime(Device device) {
+    private boolean isReadyToPoll(Device device) {
         if (!schedule.containsKey(device.getId())) {
             schedule.put(device.getId(), LocalDateTime.now());
             System.out.println("Device: " + device.getName() + " - Is Time For Polling: " + schedule.getOrDefault(device.getId(), LocalDateTime.now()));
 
-            // Вызов метода snmpPoll для каждого устройства
-            snmpPoll(device);
+            return true;
         } else {
             LocalDateTime lastPullingTime = schedule.get(device.getId());
             LocalDateTime currentTime = LocalDateTime.now();
@@ -66,8 +68,9 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             if (isTimeForPolling) {
                 System.out.println("Device: " + device.getName() + " - Last Pulling Time: " + schedule.getOrDefault(device.getId(), lastPullingTime) + " - Current Time: " + currentTime);
 
-                // Вызов метода snmpPoll для каждого устройства
-                snmpPoll(device);
+                return true;
+            } else {
+                return false;
             }
         }
     }
@@ -121,7 +124,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Object processedValue = applyModifications(dataType, castValue, parameter.getAdditive(), parameter.getCoefficient());
             System.out.println("Result Variable: " + processedValue);
             //  Проверяем значения с порогами
-            applyThresholds(processedValue, thresholds, device);
+            checkThresholds(processedValue, thresholds, device);
             snmpData.put(parameter.getName(), processedValue);
         }
 
@@ -130,7 +133,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         return snmpData;
     }
 
-    private void applyThresholds(Object processedValue, List<Threshold> thresholds, Device device) {
+    private void checkThresholds(Object processedValue, List<Threshold> thresholds, Device device) {
         for (Threshold threshold : thresholds) {
             if (threshold.getDevice().getId().equals(device.getId())) {
                 double lowValue = threshold.getLowValue();
@@ -159,7 +162,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             }
             default -> throw new IllegalArgumentException("Unsupported data type: " + dataType);
         }
-        System.out.println("Cast Value = (" + castValue + " + " + additive + ") * " + coefficient);
 
         return castValue;
     }
