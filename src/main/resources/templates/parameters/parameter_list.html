@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Parameters</title>
+</head>
+<body>
+<h2>Parameters</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Address</th>
+        <th>Device Type</th>
+        <th>Data Type</th>
+        <th>Metric</th>
+        <th>Additive</th>
+        <th>Coefficient</th>
+        <th>Description</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="parameter : ${parameters}">
+        <td th:text="${parameter.id}"></td>
+        <td th:text="${parameter.name}"></td>
+        <td th:text="${parameter.address}"></td>
+        <td th:text="${parameter.deviceType.name}"></td>
+        <td th:text="${parameter.dataType}"></td>
+        <td th:text="${parameter.metric}"></td>
+        <td th:text="${parameter.additive}"></td>
+        <td th:text="${parameter.coefficient}"></td>
+        <td th:text="${parameter.description}"></td>
+        <td>
+            <a th:href="@{/parameters/edit/{id}(id=${parameter.id})}">Edit</a>
+            <a th:href="@{/parameters/delete/{id}(id=${parameter.id})}">Delete</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<a href="/parameters/add">Add New Parameter</a>
+</body>
+</html>

@@ -2,12 +2,14 @@ package com.example.spector.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "device_types")
 public class DeviceType {
@@ -19,11 +21,11 @@ public class DeviceType {
 
     private String description;
 
-    @JsonBackReference
+    @JsonBackReference(value = "parameterDeviceType")
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Parameter> parameters;
 
-    @JsonBackReference
+    @JsonBackReference(value = "deviceDeviceType")
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private Set<Device> devices;
 
@@ -38,5 +40,9 @@ public class DeviceType {
         if (o == null || getClass() != o.getClass()) return false;
         DeviceType that = (DeviceType) o;
         return Objects.equals(id, that.id);
+    }
+    @Override
+    public String toString() {
+        return name;
     }
 }

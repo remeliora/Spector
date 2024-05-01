@@ -6,12 +6,14 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "parameters")
 public class Parameter {
@@ -41,7 +43,7 @@ public class Parameter {
     @Enumerated(EnumType.STRING)
     private DataType dataType;
 
-    @JsonBackReference
+    @JsonBackReference(value = "parameter")
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "parameter", cascade = CascadeType.ALL)
     private Set<Threshold> thresholds;
 
@@ -56,5 +58,9 @@ public class Parameter {
         if (o == null || getClass() != o.getClass()) return false;
         Parameter parameter = (Parameter) o;
         return Objects.equals(id, parameter.id) && Objects.equals(name, parameter.name);
+    }
+    @Override
+    public String toString() {
+        return name;
     }
 }

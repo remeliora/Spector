@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thresholds</title>
+</head>
+<body>
+<h2>Thresholds</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Low Value</th>
+        <th>High Value</th>
+        <th>Enabled</th>
+        <th>Parameter</th>
+        <th>Device</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="threshold : ${thresholds}">
+        <td th:text="${threshold.id}"></td>
+        <td th:text="${threshold.lowValue}"></td>
+        <td th:text="${threshold.highValue}"></td>
+        <td th:text="${threshold.isEnable} ? 'Yes' : 'No'"></td>
+        <td th:text="${threshold.parameter.name}"></td>
+        <td th:text="${threshold.device.name}"></td>
+        <td>
+            <a th:href="@{/thresholds/edit/{id}(id=${threshold.id})}">Edit</a>
+            <a th:href="@{/thresholds/delete/{id}(id=${threshold.id})}">Delete</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<a href="/thresholds/add">Add New Threshold</a>
+</body>
+</html>

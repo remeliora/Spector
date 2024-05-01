@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add/Edit Threshold</title>
+</head>
+<body>
+<h2>Add/Edit Threshold</h2>
+<form action="#" th:action="@{/thresholds/add}" th:object="${threshold}" method="post">
+    <input type="hidden" th:field="*{id}">
+    <label for="lowValue">Low Value:</label>
+    <input type="text" id="lowValue" th:field="*{lowValue}" step="any">
+    <br>
+    <label for="highValue">High Value:</label>
+    <input type="text" id="highValue" th:field="*{highValue}" step="any">
+    <br>
+    <label for="isEnable">Enabled:</label>
+    <input type="checkbox" id="isEnable" th:field="*{isEnable}">
+    <br>
+    <label for="parameter">Parameter:</label>
+    <select id="parameter" th:field="*{parameter}">
+        <option th:each="parameter : ${parameters}" th:value="${parameter.id}" th:text="${parameter.name}"></option>
+    </select>
+    <br>
+    <label for="device">Device:</label>
+    <select id="device" th:field="*{device}">
+        <option th:each="device : ${devices}" th:value="${device.id}" th:text="${device.name}"></option>
+    </select>
+    <br>
+    <button type="submit">Save</button>
+</form>
+</body>
+</html>

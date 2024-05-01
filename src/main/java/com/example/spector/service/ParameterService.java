@@ -28,6 +28,7 @@ public class ParameterService {
         if (updatedParameter != null) {
             updatedParameter.setName(parameter.getName());
             updatedParameter.setAddress(parameter.getAddress());
+            updatedParameter.setDataType(parameter.getDataType());
             updatedParameter.setMetric(parameter.getMetric());
             updatedParameter.setAdditive(parameter.getAdditive());
             updatedParameter.setCoefficient(parameter.getCoefficient());

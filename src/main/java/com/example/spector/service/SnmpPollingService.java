@@ -9,9 +9,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class SnmpPollingService {   //Сервис для взаимодействия со скриптом опроса
     @Autowired
-    private DataBaseService dataBaseService;
-
-    @Autowired
     private SnmpPollingGetAsync snmpPollingGetAsync;
 
 //    @Scheduled(fixedRate = 10000)
