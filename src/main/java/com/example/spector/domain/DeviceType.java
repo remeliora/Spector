@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -23,11 +24,11 @@ public class DeviceType {
 
     @JsonBackReference(value = "parameterDeviceType")
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
-    private Set<Parameter> parameters;
+    private List<Parameter> parameters;
 
     @JsonBackReference(value = "deviceDeviceType")
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "deviceType", cascade = CascadeType.ALL)
-    private Set<Device> devices;
+    private List<Device> devices;
 
     @Override
     public int hashCode() {

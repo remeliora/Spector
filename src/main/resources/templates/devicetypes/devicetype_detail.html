@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Add/Edit Device Type</title>
-</head>
+<head th:replace="~{fragments/header :: html_header(Add_Edit_DeviceType)}"></head>
 <body>
-<h2>Add/Edit Device Type</h2>
-<form action="#" th:action="@{/device-types/add}" th:object="${deviceType}" method="post">
-    <input type="hidden" th:field="*{id}">
-    <label for="name">Name:</label>
-    <input type="text" id="name" th:field="*{name}">
-    <br>
-    <label for="description">Description:</label>
-    <input type="text" id="description" th:field="*{description}">
-    <br>
-    <button type="submit">Save</button>
-</form>
+<nav th:replace="~{/fragments/navbar :: navbar_container}"></nav>
+<div class="container-fluid">
+    <div style="margin-right: 0.5em; margin-left: 0.5em; text-align: left; width: 50%">
+        <div class="page-title-holder d-flex align-items-center">
+            <h2 class="mt-4" style="margin-bottom: 0.5em; margin-left: 0.5em">Добавить / редактировать тип
+                устройства</h2>
+        </div>
+        <div>
+            <form action="#" th:action="@{/device-types/add}" th:object="${deviceType}" method="post">
+                <input type="hidden" th:field="*{id}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Наименование типа устройства:</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание:</label>
+                    <textarea type="text" id="description" rows="3" class="form-control"
+                              th:field="*{description}"></textarea>
+                </div>
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

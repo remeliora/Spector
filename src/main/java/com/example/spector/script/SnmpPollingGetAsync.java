@@ -26,12 +26,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class SnmpPollingGetAsync {   // Класс скрипта опроса по протоколу SNMP
     private final DataBaseService dataBaseService;
     private final DAOService daoService;
@@ -75,7 +75,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         }
     }
 
-    @Transactional
     public Map<String, Object> snmpPoll(Device device) {
         Long deviceId = device.getId();
         String deviceName = device.getName();
@@ -85,7 +84,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
         schedule.put(device.getId(), lastPollingTime);
 
-        Set<Parameter> parameters = device.getDeviceType().getParameters();
+        List<Parameter> parameters = device.getDeviceType().getParameters();
         Map<String, Object> snmpData = new HashMap<>();
 
         snmpData.put("deviceId", deviceId);
@@ -149,7 +148,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         }
     }
 
-    private Object applyModifications(DataType dataType, Object castValue, Double additive, Double coefficient) {
+    private Object applyModifications(DataType dataType, Object castValue,
+                                      Double additive, Double coefficient) {
         switch (dataType) {
             case INTEGER -> {
                 castValue = (int) (((int) castValue + additive) * coefficient);
@@ -160,7 +160,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             case LONG -> {
                 castValue = (long) (((long) castValue + additive) * coefficient);
             }
-            default -> throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            default -> throw new IllegalArgumentException("Unsupported data type: "
+                    + dataType);
         }
 
         return castValue;

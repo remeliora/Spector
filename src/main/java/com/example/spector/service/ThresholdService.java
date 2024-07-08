@@ -2,13 +2,20 @@ package com.example.spector.service;
 
 import com.example.spector.domain.Threshold;
 import com.example.spector.repositories.ThresholdRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @Service
+@RequiredArgsConstructor
 public class ThresholdService {
-    @Autowired
-    private ThresholdRepository thresholdRepository;
+    private final ThresholdRepository thresholdRepository;
+
+    private static final Logger logger = Logger.getLogger(ThresholdService.class.getName());
 
     public Threshold createThreshold(Threshold threshold) {
         return thresholdRepository.save(threshold);
@@ -36,6 +43,14 @@ public class ThresholdService {
     }
 
     public void deleteThreshold(Long thresholdId) {
-        thresholdRepository.deleteById(thresholdId);
+        logger.log(Level.INFO, "Starting deleteThreshold method");
+
+        Optional<Threshold> thresholdOptional = thresholdRepository.findById(thresholdId);
+        if (thresholdOptional.isPresent()) {
+            Threshold threshold = thresholdOptional.get();
+            thresholdRepository.deleteById(thresholdId);
+        }
+
+        logger.log(Level.INFO, "Threshold with ID {0} deleted", thresholdId);
     }
 }

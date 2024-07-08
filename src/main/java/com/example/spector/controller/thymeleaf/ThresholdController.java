@@ -3,6 +3,12 @@ package com.example.spector.controller.thymeleaf;
 import com.example.spector.domain.Device;
 import com.example.spector.domain.Parameter;
 import com.example.spector.domain.Threshold;
+import com.example.spector.domain.dto.DeviceDTO;
+import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.mapper.DeviceDTOConverter;
+import com.example.spector.mapper.ParameterDTOConverter;
+import com.example.spector.mapper.ThresholdDTOConverter;
 import com.example.spector.service.DeviceService;
 import com.example.spector.service.ParameterService;
 import com.example.spector.service.ThresholdService;
@@ -12,23 +18,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/thresholds")
 public class ThresholdController {
-    @Autowired
-    private ThresholdService thresholdService;
-
-    @Autowired
-    private ParameterService parameterService;
-
-    @Autowired
-    private DeviceService deviceService;
+    private final ThresholdService thresholdService;
+    private final ParameterService parameterService;
+    private final DeviceService deviceService;
+    private final ThresholdDTOConverter thresholdDTOConverter;
+    private final ParameterDTOConverter parameterDTOConverter;
+    private final DeviceDTOConverter deviceDTOConverter;
 
     @GetMapping("/list")
     public String getAllThresholds(Model model) {
         Iterable<Threshold> thresholds = thresholdService.getAllThresholds();
-        model.addAttribute("thresholds", thresholds);
+        List<ThresholdDTO> thresholdDTOs = new ArrayList<>();
+        thresholds.forEach(threshold -> thresholdDTOs.add(thresholdDTOConverter.convertToDTO(threshold)));
+        model.addAttribute("thresholds", thresholdDTOs);
         return "thresholds/threshold_list";
     }
 
@@ -36,14 +45,19 @@ public class ThresholdController {
     public String showAddForm(Model model) {
         Iterable<Parameter> parameters = parameterService.getAllParameters();
         Iterable<Device> devices = deviceService.getAllDevices();
-        model.addAttribute("parameters", parameters);
-        model.addAttribute("devices", devices);
-        model.addAttribute("threshold", new Threshold());
+        List<ParameterDTO> parameterDTOs = new ArrayList<>();
+        List<DeviceDTO> deviceDTOs = new ArrayList<>();
+        parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));
+        devices.forEach(device -> deviceDTOs.add(deviceDTOConverter.convertToDTO(device)));
+        model.addAttribute("parameters", parameterDTOs);
+        model.addAttribute("devices", deviceDTOs);
+        model.addAttribute("threshold", new ThresholdDTO());
         return "thresholds/threshold_detail";
     }
 
     @PostMapping("/add")
-    public String addThreshold(@ModelAttribute("threshold") Threshold threshold) {
+    public String addThreshold(@ModelAttribute("threshold") ThresholdDTO thresholdDTO) {
+        Threshold threshold = thresholdDTOConverter.convertToEntity(thresholdDTO);
         thresholdService.createThreshold(threshold);
         return "redirect:/thresholds/list";
     }
@@ -54,9 +68,13 @@ public class ThresholdController {
         if (threshold != null) {
             Iterable<Parameter> parameters = parameterService.getAllParameters();
             Iterable<Device> devices = deviceService.getAllDevices();
-            model.addAttribute("parameters", parameters);
-            model.addAttribute("devices", devices);
-            model.addAttribute("threshold", threshold);
+            List<ParameterDTO> parameterDTOs = new ArrayList<>();
+            List<DeviceDTO> deviceDTOs = new ArrayList<>();
+            parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));
+            devices.forEach(device -> deviceDTOs.add(deviceDTOConverter.convertToDTO(device)));
+            model.addAttribute("parameters", parameterDTOs);
+            model.addAttribute("devices", deviceDTOs);
+            model.addAttribute("threshold", thresholdDTOConverter.convertToDTO(threshold));
             return "thresholds/threshold_detail";
         } else {
             return "redirect:/thresholds/list";
@@ -64,7 +82,8 @@ public class ThresholdController {
     }
 
     @PostMapping("/edit/{id}")
-    public String editThreshold(@PathVariable("id") Long thresholdId, @ModelAttribute("threshold") Threshold threshold) {
+    public String editThreshold(@PathVariable("id") Long thresholdId, @ModelAttribute("threshold") ThresholdDTO thresholdDTO) {
+        Threshold threshold = thresholdDTOConverter.convertToEntity(thresholdDTO);
         thresholdService.updateThreshold(thresholdId, threshold);
         return "redirect:/thresholds/list";
     }

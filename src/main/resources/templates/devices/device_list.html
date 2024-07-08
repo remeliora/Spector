@@ -1,42 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Devices</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/header :: html_header(Devices)}"></head>
 <body>
-<h2>Devices</h2>
-<table border="1">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>IP Address</th>
-        <th>Device Type</th>
-        <th>Description</th>
-        <th>Period</th>
-        <th>Alarm Type</th>
-        <th>Enabled</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="device : ${devices}">
-        <td th:text="${device.id}"></td>
-        <td th:text="${device.name}"></td>
-        <td th:text="${device.ipAddress}"></td>
-        <td th:text="${device.deviceType.name}"></td>
-        <td th:text="${device.description}"></td>
-        <td th:text="${device.period}"></td>
-        <td th:text="${device.alarmType}"></td>
-        <td th:text="${device.isEnable} ? 'Yes' : 'No'"></td>
-        <td>
-            <a th:href="@{/devices/edit/{id}(id=${device.id})}">Edit</a>
-            <a th:href="@{/devices/delete/{id}(id=${device.id})}">Delete</a>
-        </td>
-    </tr>
-    </tbody>
-</table>
-<a href="/devices/add">Add New Device</a>
+<nav th:replace="~{/fragments/navbar :: navbar_container}"></nav>
+<div class="container-fluid">
+    <div class="page-title-holder d-flex align-items-center">
+        <h1 class="mt-4" style="margin-bottom: 0.9em; margin-left: 0.5em">Устройства</h1>
+    </div>
+    <div style="margin-bottom: 1.5em; margin-left: 0.5em; margin-right: 0.5em">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>IP Address</th>
+                <th>Device Type</th>
+                <th>Description</th>
+                <th>Period</th>
+                <th>Alarm Type</th>
+                <th>Enabled</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="device : ${devices}">
+                <td th:text="${device.id}"></td>
+                <td th:text="${device.name}"></td>
+                <td th:text="${device.ipAddress}"></td>
+                <td th:text="${device.deviceType.name}"></td>
+                <td th:text="${device.description}"></td>
+                <td th:text="${device.period}"></td>
+                <td th:text="${device.alarmType}"></td>
+                <td th:text="${device.isEnable} ? 'Yes' : 'No'"></td>
+                <td>
+                    <a class="btn btn-sm btn-primary" th:href="@{/devices/edit/{id}(id=${device.id})}">Edit</a>
+                    <a class="btn btn-sm btn-danger" th:href="@{/devices/delete/{id}(id=${device.id})}">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <a href="/devices/add" class="btn btn-success">Добавить устройство</a>
+</div>
 </body>
 </html>

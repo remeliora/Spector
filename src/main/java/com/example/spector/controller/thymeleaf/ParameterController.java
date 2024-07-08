@@ -2,40 +2,50 @@ package com.example.spector.controller.thymeleaf;
 
 import com.example.spector.domain.DeviceType;
 import com.example.spector.domain.Parameter;
+import com.example.spector.domain.dto.DeviceTypeDTO;
+import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.mapper.DeviceTypeDTOConverter;
+import com.example.spector.mapper.ParameterDTOConverter;
 import com.example.spector.service.DeviceTypeService;
 import com.example.spector.service.ParameterService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/parameters")
 public class ParameterController {
-    @Autowired
-    private ParameterService parameterService;
-
-    @Autowired
-    private DeviceTypeService deviceTypeService;
+    private final ParameterService parameterService;
+    private final DeviceTypeService deviceTypeService;
+    private final ParameterDTOConverter parameterDTOConverter;
+    private final DeviceTypeDTOConverter deviceTypeDTOConverter;
 
     @GetMapping("/list")
     public String getAllParameters(Model model) {
         Iterable<Parameter> parameters = parameterService.getAllParameters();
-        model.addAttribute("parameters", parameters);
+        List<ParameterDTO> parameterDTOs = new ArrayList<>();
+        parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));
+        model.addAttribute("parameters", parameterDTOs);
         return "parameters/parameter_list";
     }
     @GetMapping("/add")
     public String showAddForm(Model model) {
         Iterable<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
-        model.addAttribute("deviceTypes", deviceTypes);
-        model.addAttribute("parameter", new Parameter());
+        List<DeviceTypeDTO> deviceTypeDTOs = new ArrayList<>();
+        deviceTypes.forEach(deviceType -> deviceTypeDTOs.add(deviceTypeDTOConverter.convertToDTO(deviceType)));
+        model.addAttribute("deviceTypes", deviceTypeDTOs);
+        model.addAttribute("parameter", new ParameterDTO());
         return "parameters/parameter_detail";
     }
 
     @PostMapping("/add")
-    public String addParameter(@ModelAttribute("parameter") Parameter parameter) {
+    public String addParameter(@ModelAttribute("parameter") ParameterDTO parameterDTO) {
+        Parameter parameter = parameterDTOConverter.convertToEntity(parameterDTO);
         parameterService.createParameter(parameter);
         return "redirect:/parameters/list";
     }
@@ -45,8 +55,10 @@ public class ParameterController {
         Parameter parameter = parameterService.getParameterById(parameterId);
         if (parameter != null) {
             Iterable<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
-            model.addAttribute("deviceTypes", deviceTypes);
-            model.addAttribute("parameter", parameter);
+            List<DeviceTypeDTO> deviceTypeDTOs = new ArrayList<>();
+            deviceTypes.forEach(deviceType -> deviceTypeDTOs.add(deviceTypeDTOConverter.convertToDTO(deviceType)));
+            model.addAttribute("deviceTypes", deviceTypeDTOs);
+            model.addAttribute("parameter", parameterDTOConverter.convertToDTO(parameter));
             return "parameters/parameter_detail";
         } else {
             return "redirect:/parameters/list";
@@ -54,7 +66,8 @@ public class ParameterController {
     }
 
     @PostMapping("/edit/{id}")
-    public String editParameter(@PathVariable("id") Long parameterId, @ModelAttribute("parameter") Parameter parameter) {
+    public String editParameter(@PathVariable("id") Long parameterId, @ModelAttribute("parameter") ParameterDTO parameterDTO) {
+        Parameter parameter = parameterDTOConverter.convertToEntity(parameterDTO);
         parameterService.updateParameter(parameterId, parameter);
         return "redirect:/parameters/list";
     }

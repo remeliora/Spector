@@ -1,33 +1,54 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Add/Edit Threshold</title>
-</head>
+<head th:replace="~{fragments/header :: html_header(Add_Edit_Threshold)}"></head>
 <body>
-<h2>Add/Edit Threshold</h2>
-<form action="#" th:action="@{/thresholds/add}" th:object="${threshold}" method="post">
-    <input type="hidden" th:field="*{id}">
-    <label for="lowValue">Low Value:</label>
-    <input type="text" id="lowValue" th:field="*{lowValue}" step="any">
-    <br>
-    <label for="highValue">High Value:</label>
-    <input type="text" id="highValue" th:field="*{highValue}" step="any">
-    <br>
-    <label for="isEnable">Enabled:</label>
-    <input type="checkbox" id="isEnable" th:field="*{isEnable}">
-    <br>
-    <label for="parameter">Parameter:</label>
-    <select id="parameter" th:field="*{parameter}">
-        <option th:each="parameter : ${parameters}" th:value="${parameter.id}" th:text="${parameter.name}"></option>
-    </select>
-    <br>
-    <label for="device">Device:</label>
-    <select id="device" th:field="*{device}">
-        <option th:each="device : ${devices}" th:value="${device.id}" th:text="${device.name}"></option>
-    </select>
-    <br>
-    <button type="submit">Save</button>
-</form>
+<nav th:replace="~{/fragments/navbar :: navbar_container}"></nav>
+<div class="container-fluid">
+    <div style="margin-right: 0.5em; margin-left: 0.5em; text-align: left; width: 50%">
+        <div class="page-title-holder d-flex align-items-center">
+            <h2 class="mt-4" style="margin-bottom: 0.5em; margin-left: 0.5em">Добавить / редактировать пороговое
+                значение</h2>
+        </div>
+        <div>
+            <form action="#" th:action="@{/thresholds/add}" th:object="${threshold}" method="post">
+                <input type="hidden" th:field="*{id}">
+                <div class="mb-3">
+                    <label for="lowValue" class="form-label">Нижний порог:</label>
+                    <input type="text" class="form-control" id="lowValue" th:field="*{lowValue}" step="any">
+                </div>
+                <div class="mb-3">
+                    <label for="highValue" class="form-label">Верхний порог:</label>
+                    <input type="text" class="form-control" id="highValue" th:field="*{highValue}" step="any">
+                </div>
+                <div class="mb-3">
+                    <div lass="form-check">
+                        <label for="isEnable" class="form-check-label">Включить для опроса:</label>
+                        <input type="checkbox" id="isEnable" class="form-check-input" th:field="*{isEnable}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="parameter" class="form-label">Параметр:</label>
+                    <select class="form-select" aria-label="Default select example" id="parameter"
+                            th:field="*{parameter.id}">
+                        <option th:each="parameter : ${parameters}" th:value="${parameter.id}"
+                                th:text="${parameter.name}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="device" class="form-label">Устройство:</label>
+                    <select class="form-select" aria-label="Default select example" id="device"
+                            th:field="*{device.id}">
+                        <option th:each="device : ${devices}" th:value="${device.id}"
+                                th:text="${device.name}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

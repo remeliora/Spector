@@ -1,32 +1,36 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Device Types</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/header :: html_header(Device_Types)}"></head>
 <body>
-<h2>Device Types</h2>
-<table border="1">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="deviceType : ${deviceTypes}">
-        <td th:text="${deviceType.id}"></td>
-        <td th:text="${deviceType.name}"></td>
-        <td th:text="${deviceType.description}"></td>
-        <td>
-            <a th:href="@{/device-types/edit/{id}(id=${deviceType.id})}">Edit</a>
-            <a th:href="@{/device-types/delete/{id}(id=${deviceType.id})}">Delete</a>
-        </td>
-    </tr>
-    </tbody>
-</table>
-<a href="/device-types/add">Add New Device Type</a>
+<nav th:replace="~{/fragments/navbar :: navbar_container}"></nav>
+<div class="container-fluid">
+    <div class="page-title-holder d-flex align-items-center">
+        <h1 class="mt-4" style="margin-bottom: 0.9em; margin-left: 0.5em">Типы устройств</h1>
+    </div>
+    <div style="margin-bottom: 1.5em; margin-left: 0.5em; margin-right: 0.5em">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="deviceType : ${deviceTypes}">
+                <td th:text="${deviceType.id}"></td>
+                <td th:text="${deviceType.name}"></td>
+                <td th:text="${deviceType.description}"></td>
+                <td>
+                    <a class="btn btn-sm btn-primary" th:href="@{/device-types/edit/{id}(id=${deviceType.id})}">Edit</a>
+                    <a class="btn btn-sm btn-danger" th:href="@{/device-types/delete/{id}(id=${deviceType.id})}">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <a href="/device-types/add" class="btn btn-success">Добавить тип устройства</a>
+</div>
 </body>
 </html>

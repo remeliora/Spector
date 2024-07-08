@@ -2,7 +2,6 @@ package com.example.spector.dao;
 
 import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceData;
-import com.example.spector.service.DataBaseService;
 import com.example.spector.service.DeviceDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;

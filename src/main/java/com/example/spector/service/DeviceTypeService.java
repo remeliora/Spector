@@ -2,13 +2,13 @@ package com.example.spector.service;
 
 import com.example.spector.domain.DeviceType;
 import com.example.spector.repositories.DeviceTypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class DeviceTypeService {
-    @Autowired
-    public DeviceTypeRepository deviceTypeRepository;
+    public final DeviceTypeRepository deviceTypeRepository;
 
     public DeviceType createDeviceType(DeviceType deviceType) {
         return deviceTypeRepository.save(deviceType);

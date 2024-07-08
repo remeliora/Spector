@@ -1,43 +1,62 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Add/Edit Device</title>
-</head>
+<head th:replace="~{fragments/header :: html_header(Add_Edit_Device)}"></head>
 <body>
-<h2>Add/Edit Device</h2>
-<form action="#" th:action="@{/devices/add}" th:object="${device}" method="post">
-    <input type="hidden" th:field="*{id}">
-    <label for="name">Name:</label>
-    <input type="text" id="name" th:field="*{name}">
-    <br>
-    <label for="ipAddress">IP Address:</label>
-    <input type="text" id="ipAddress" th:field="*{ipAddress}">
-    <br>
-    <label for="deviceType">Device Type:</label>
-    <select id="deviceType" th:field="*{deviceType}">
-        <option th:each="deviceType : ${deviceTypes}" th:value="${deviceType.id}" th:text="${deviceType.name}"></option>
-    </select>
-    <br>
-    <label for="description">Description:</label>
-    <input type="text" id="description" th:field="*{description}">
-    <br>
-    <label for="period">Period:</label>
-    <input type="number" id="period" th:field="*{period}">
-    <br>
-<!--    <label for="alarmType">Alarm Type:</label>-->
-<!--    <input type="text" id="alarmType" th:field="*{alarmType}">-->
-<!--    <br>-->
-    <label for="alarmType">Alarm Type:</label>
-    <select id="alarmType" th:field="*{alarmType}">
-        <option th:each="alarm : ${T(com.example.spector.domain.enums.AlarmType).values()}"
-                th:value="${alarm}" th:text="${alarm}"></option>
-    </select>
-    <br>
-    <label for="isEnable">Enabled:</label>
-    <input type="checkbox" id="isEnable" th:field="*{isEnable}">
-    <br>
-    <button type="submit">Save</button>
-</form>
+<nav th:replace="~{/fragments/navbar :: navbar_container}"></nav>
+<div class="container-fluid">
+    <div style="margin-right: 0.5em; margin-left: 0.5em; text-align: left; width: 50%">
+        <div class="page-title-holder d-flex align-items-center">
+            <h2 class="mt-4" style="margin-bottom: 0.5em; margin-left: 0.5em">Добавить / редактировать устройство</h2>
+        </div>
+        <div>
+            <form action="#" th:action="@{/devices/add}" th:object="${device}" method="post">
+                <input type="hidden" th:field="*{id}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Наименование устройства:</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}">
+                </div>
+                <div class="mb-3">
+                    <label for="ipAddress" class="form-label">IP Адрес:</label>
+                    <input type="text" class="form-control" id="ipAddress" th:field="*{ipAddress}">
+                </div>
+                <div class="mb-3">
+                    <label for="deviceType" class="form-label">Тип устройства:</label>
+                    <select class="form-select" aria-label="Default select example" id="deviceType"
+                            th:field="*{deviceType.id}">
+                        <option th:each="deviceType : ${deviceTypes}" th:value="${deviceType.id}"
+                                th:text="${deviceType.name}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="period" class="form-label">Период:</label>
+                    <input type="number" class="form-control" id="period" th:field="*{period}">
+                </div>
+                <div class="mb-3">
+                    <label for="alarmType" class="form-label">Фиксация ошибок:</label>
+                    <select class="form-select" aria-label="Default select example" id="alarmType"
+                            th:field="*{alarmType}">
+                        <option th:each="alarm : ${T(com.example.spector.domain.enums.AlarmType).values()}"
+                                th:value="${alarm}" th:text="${alarm}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div lass="form-check">
+                        <label for="isEnable" class="form-check-label">Включить для опроса:</label>
+                        <input type="checkbox" id="isEnable" class="form-check-input" th:field="*{isEnable}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание:</label>
+                    <textarea type="text" id="description" rows="3" class="form-control"
+                              th:field="*{description}"></textarea>
+                </div>
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
 </body>
 </html>

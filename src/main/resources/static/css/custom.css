@@ -1,0 +1,27 @@
+.navbar-dark {
+    background-color: #039aff
+}
+
+.navbar-brand {
+    font-size: 1.6em; /* Размер шрифта для названия бренда */
+    margin-left: 0.5em;
+    margin-bottom: 0.2em;
+}
+
+.nav-link {
+    font-size: 1.3em; /* Размер шрифта для ссылок навигации */
+}
+
+.dropdown-item {
+    font-size: 1.2em; /* Размер шрифта для элементов выпадающего меню */
+}
+
+.btn-success {
+    margin-bottom: 1.5em;
+    margin-left: 0.5em;
+    font-size: 1.2em;
+}
+
+.table-hover {
+    font-size: 1.2em;
+}

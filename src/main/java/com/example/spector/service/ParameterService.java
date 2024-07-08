@@ -3,13 +3,14 @@ package com.example.spector.service;
 import com.example.spector.domain.Device;
 import com.example.spector.domain.Parameter;
 import com.example.spector.repositories.ParameterRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ParameterService {
-    @Autowired
-    private ParameterRepository parameterRepository;
+    private final ParameterRepository parameterRepository;
 
     public Parameter createParameter(Parameter parameter) {
         return parameterRepository.save(parameter);
