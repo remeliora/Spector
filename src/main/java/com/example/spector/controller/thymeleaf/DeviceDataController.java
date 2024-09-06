@@ -34,7 +34,7 @@ public class DeviceDataController {
     @GetMapping("/list")
     public String getAllDevicesAndParameters(Model model) {
         // Получаем список всех устройств
-        Iterable<Device> devices = deviceService.getAllDevices();
+        List<Device> devices = deviceService.getAllDevices();
         // Преобразуем устройства в DTO
         List<DeviceDTO> deviceDTOs = new ArrayList<>();
         devices.forEach(device -> deviceDTOs.add(deviceDTOConverter.convertToDTO(device)));
@@ -87,7 +87,7 @@ public class DeviceDataController {
     @ResponseBody
     public Map<String, Object> getParameterValues() {
         Map<String, Object> parameterValues = new HashMap<>();
-        Iterable<Device> devices = deviceService.getAllDevices();
+        List<Device> devices = deviceService.getAllDevices();
         devices.forEach(device -> {
             String deviceName = device.getName();
             List<DeviceDataDTO> deviceDataDTOList = deviceDataService.getParametersByDeviceName(deviceName);

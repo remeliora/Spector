@@ -27,7 +27,7 @@ public class ParameterController {
 
     @GetMapping("/list")
     public String getAllParameters(Model model) {
-        Iterable<Parameter> parameters = parameterService.getAllParameters();
+        List<Parameter> parameters = parameterService.getAllParameters();
         List<ParameterDTO> parameterDTOs = new ArrayList<>();
         parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));
         model.addAttribute("parameters", parameterDTOs);
@@ -35,7 +35,7 @@ public class ParameterController {
     }
     @GetMapping("/add")
     public String showAddForm(Model model) {
-        Iterable<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
+        List<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
         List<DeviceTypeDTO> deviceTypeDTOs = new ArrayList<>();
         deviceTypes.forEach(deviceType -> deviceTypeDTOs.add(deviceTypeDTOConverter.convertToDTO(deviceType)));
         model.addAttribute("deviceTypes", deviceTypeDTOs);
@@ -54,7 +54,7 @@ public class ParameterController {
     public String showEditForm(@PathVariable("id") Long parameterId, Model model) {
         Parameter parameter = parameterService.getParameterById(parameterId);
         if (parameter != null) {
-            Iterable<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
+            List<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
             List<DeviceTypeDTO> deviceTypeDTOs = new ArrayList<>();
             deviceTypes.forEach(deviceType -> deviceTypeDTOs.add(deviceTypeDTOConverter.convertToDTO(deviceType)));
             model.addAttribute("deviceTypes", deviceTypeDTOs);

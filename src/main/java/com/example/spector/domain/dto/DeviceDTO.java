@@ -3,6 +3,7 @@ package com.example.spector.domain.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -16,5 +17,5 @@ public class DeviceDTO {
     private Integer period;
     private String alarmType;
     private Boolean isEnable;
-    private Set<Long> thresholdId;
+    private List<ThresholdDTO> threshold;
 }

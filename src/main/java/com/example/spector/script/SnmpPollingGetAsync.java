@@ -1,10 +1,12 @@
 package com.example.spector.script;
 
+import com.example.spector.checker.DeviceConnectionChecker;
 import com.example.spector.converter.TypeCaster;
 import com.example.spector.converter.TypeCasterFactory;
-import com.example.spector.domain.Device;
-import com.example.spector.domain.Parameter;
-import com.example.spector.domain.Threshold;
+import com.example.spector.domain.dto.DeviceDTO;
+import com.example.spector.domain.dto.DeviceTypeDTO;
+import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.service.DAOService;
 import com.example.spector.service.DataBaseService;
@@ -26,120 +28,151 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Component
 @RequiredArgsConstructor
-@Transactional
 public class SnmpPollingGetAsync {   // Класс скрипта опроса по протоколу SNMP
     private final DataBaseService dataBaseService;
     private final DAOService daoService;
-    private final Map<Long, LocalDateTime> schedule;
+    private final DeviceConnectionChecker deviceConnectionChecker;
+    private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
 
+    @Transactional
     public void pollDevices() {
-        //  Вызов списка всех устройств из БД для опроса (с параметром isEnable = true)
-        List<Device> devicesToPoll = (List<Device>) dataBaseService.getDeviceByIsEnableTrue();
+        List<DeviceDTO> deviceDTOList = dataBaseService.getDeviceDTOByIsEnableTrue();
 
-        for (Device device : devicesToPoll) {
-            //  Проверка на наличие файла устройства и его создание
-            daoService.prepareDAO(device);
+        List<CompletableFuture<Void>> futureDeviceList = deviceDTOList.stream()
+                .map(deviceDTO -> CompletableFuture.runAsync(() -> preparePoll(deviceDTO)))
+                .toList();
 
-            // Проверка времени прошедшего с последнего цикла опроса
-            if (!isReadyToPoll(device)) {
-                // Вызов метода snmpPoll для каждого устройства
-                snmpPoll(device);
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futureDeviceList.toArray(new CompletableFuture[0]));
+        try {
+            allOf.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void preparePoll(DeviceDTO deviceDTO) {
+        //  Проверка на наличие файла устройства и его создание
+        daoService.prepareDAO(deviceDTO);
+
+        // Проверка времени прошедшего с последнего цикла опроса
+        if (isReadyToPoll(deviceDTO)) {
+            if (deviceConnectionChecker.isDeviceAvailable(deviceDTO.getIpAddress())) {
+                Map<String, Object> snmpData = snmpPoll(deviceDTO);
+                daoService.writeData(deviceDTO, snmpData);
+            } else {
+                System.out.println("Device " + deviceDTO.getName() + " is not available. Skipping...");
             }
         }
     }
 
-    private boolean isReadyToPoll(Device device) {
-        if (!schedule.containsKey(device.getId())) {
-            schedule.put(device.getId(), LocalDateTime.now());
-            System.out.println("Device: " + device.getName() + " - Is Time For Polling: " + schedule.getOrDefault(device.getId(), LocalDateTime.now()));
+    private boolean isReadyToPoll(DeviceDTO deviceDTO) {
+        Long deviceId = deviceDTO.getId();
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        // Пытаемся поставить метку времени первого опроса, если устройство не найдено в расписании
+        LocalDateTime lastPullingTime = schedule.putIfAbsent(deviceId, currentTime);
+
+        // Устройство опрашивается впервые
+        if (lastPullingTime == null) {
+            System.out.println("Device: " + deviceDTO.getName() + " - Is Time For Polling: " + currentTime);
+
+            return true;
+        }
+
+        // Проверка, прошло ли достаточно времени для следующего опроса
+        int pollingPeriod = deviceDTO.getPeriod();
+        boolean isTimeForPolling = Duration.between(lastPullingTime, currentTime).toSeconds() >= pollingPeriod;
+
+        if (isTimeForPolling) {
+            System.out.println("Device: " + deviceDTO.getName() + " - Last Pulling Time: " + lastPullingTime + " - Current Time: " + currentTime);
+            schedule.put(deviceId, currentTime);
 
             return true;
         } else {
-            LocalDateTime lastPullingTime = schedule.get(device.getId());
-            LocalDateTime currentTime = LocalDateTime.now();
-            int pollingPeriod = device.getPeriod();
-            boolean isTimeForPolling = Duration.between(lastPullingTime, currentTime).toSeconds() >= pollingPeriod;
+            System.out.println("Device: " + deviceDTO.getName() + " - Not Yet Time For Polling. Last Polling Time: " + lastPullingTime + " - Current Time: " + currentTime);
 
-            if (isTimeForPolling) {
-                System.out.println("Device: " + device.getName() + " - Last Pulling Time: " + schedule.getOrDefault(device.getId(), lastPullingTime) + " - Current Time: " + currentTime);
-
-                return true;
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
-    public Map<String, Object> snmpPoll(Device device) {
-        Long deviceId = device.getId();
-        String deviceName = device.getName();
-        String deviceIp = device.getIpAddress();
+    private Map<String, Object> snmpPoll(DeviceDTO deviceDTO) {
 
-        LocalDateTime lastPollingTime = LocalDateTime.now();
-
-        schedule.put(device.getId(), lastPollingTime);
-
-        List<Parameter> parameters = device.getDeviceType().getParameters();
         Map<String, Object> snmpData = new HashMap<>();
 
-        snmpData.put("deviceId", deviceId);
-        snmpData.put("deviceName", deviceName);
-        snmpData.put("deviceIp", deviceIp);
-        snmpData.put("lastPollingTime", lastPollingTime);
+        snmpData.put("deviceId", deviceDTO.getId());
+        snmpData.put("deviceName", deviceDTO.getName());
+        snmpData.put("deviceIp", deviceDTO.getIpAddress());
+        snmpData.put("lastPollingTime", LocalDateTime.now());
+
+        schedule.put(deviceDTO.getId(), LocalDateTime.now());
+
+        // Загружаем полный объект DeviceTypeDTO с параметрами
+        DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
+
+        List<ParameterDTO> parameterDTOList = deviceTypeDTO.getParameter();
 
         //  Отладочный вывод
-        System.out.println("Parameters to Poll: " + parameters.size());
+        System.out.println("Parameters to Poll: " + parameterDTOList.size());
 
-        for (Parameter parameter : parameters) {
-            OID oid = new OID(parameter.getAddress());
-            PDU pdu = new PDU();
-            pdu.add(new VariableBinding(oid));
-            pdu.setType(PDU.GET);
+        List<CompletableFuture<Void>> futureParameterList = parameterDTOList.stream()
+                .map(parameterDTO -> CompletableFuture.runAsync(() -> prepareSNMPPoll(deviceDTO, parameterDTO, snmpData)))
+                .toList();
 
-            //  Отладочный вывод
-            System.out.println("Performing SNMP GET for Parameter: " + parameter.getName());
-
-            VariableBinding result = performSnmpGet(deviceIp, pdu);
-
-            //  Отладочные выводы
-            System.out.println("Parameter Address: " + parameter.getAddress());
-            System.out.println("Result Variable: " + result.getVariable());
-
-            //  Обрабатываем значения переменных в соответствии с их типом данных
-            Variable variable = result.getVariable();
-            List<Threshold> thresholds = (List<Threshold>) dataBaseService.getThresholdsByParameterAndIsEnableTrue(parameter);
-            //  Получаем тип данных параметра
-            DataType dataType = parameter.getDataType();
-            //  Применяем cast к полученным значениям
-            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
-            Object castValue = castTo(dataType, variable, typeCaster);
-            System.out.println("Result Variable: " + castValue);
-            //  Применяем модификаторы к значениям
-            Object processedValue = applyModifications(dataType, castValue, parameter.getAdditive(), parameter.getCoefficient());
-            System.out.println("Result Variable: " + processedValue);
-            //  Проверяем значения с порогами
-            checkThresholds(processedValue, thresholds, device);
-            snmpData.put(parameter.getName(), processedValue);
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futureParameterList.toArray(new CompletableFuture[0]));
+        try {
+            allOf.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         }
-
-        daoService.writeData(device, snmpData);
 
         return snmpData;
     }
 
-    private void checkThresholds(Object processedValue, List<Threshold> thresholds, Device device) {
-        for (Threshold threshold : thresholds) {
-            if (threshold.getDevice().getId().equals(device.getId())) {
-                double lowValue = threshold.getLowValue();
-                double highValue = threshold.getHighValue();
+    private void prepareSNMPPoll(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Map<String, Object> snmpData) {
+        OID oid = new OID(parameterDTO.getAddress());
+        PDU pdu = new PDU();
+        pdu.add(new VariableBinding(oid));
+        pdu.setType(PDU.GET);
+
+//        //  Отладочный вывод
+//        System.out.println("Performing SNMP GET for Parameter: " + parameterDTO.getName());
+
+        VariableBinding result = performSnmpGet(deviceDTO.getIpAddress(), pdu);
+
+//        //  Отладочные выводы
+        System.out.println("Parameter Address: " + parameterDTO.getAddress());
+//        System.out.println("Result Variable: " + result.getVariable());
+
+        //  Обрабатываем значения переменных в соответствии с их типом данных
+        Variable variable = result.getVariable();
+        List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
+        //  Получаем тип данных параметра
+
+        DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+        //  Применяем cast к полученным значениям
+        TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
+        Object castValue = castTo(dataType, variable, typeCaster);
+//        System.out.println("Result Variable: " + castValue);
+        //  Применяем модификаторы к значениям
+        Object processedValue = applyModifications(dataType, castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+        System.out.println("Result Variable: " + processedValue);
+        //  Проверяем значения с порогами
+        checkThresholds(processedValue, thresholdDTOList, deviceDTO);
+        snmpData.put(parameterDTO.getName(), processedValue);
+    }
+
+    private void checkThresholds(Object processedValue, List<ThresholdDTO> thresholdDTOList, DeviceDTO deviceDTO) {
+        for (ThresholdDTO thresholdDTO : thresholdDTOList) {
+            if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
+                double lowValue = thresholdDTO.getLowValue();
+                double highValue = thresholdDTO.getHighValue();
 
                 if ((double) processedValue < lowValue || (double) processedValue > highValue) {
-                    System.out.println("Threshold crossed: Parameter " + threshold.getParameter().getName() +
+                    System.out.println("Threshold crossed: Parameter " + thresholdDTO.getParameter().getName() +
                             " with value " + processedValue + " is out of range [" + lowValue + ", " + highValue + "]");
                 } else {
                     System.out.println("Threshold successful");

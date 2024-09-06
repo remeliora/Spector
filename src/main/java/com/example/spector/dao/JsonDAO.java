@@ -1,6 +1,7 @@
 package com.example.spector.dao;
 
 import com.example.spector.domain.Device;
+import com.example.spector.domain.dto.DeviceDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -20,15 +21,15 @@ public class JsonDAO implements DAO {
 
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
-    public void prepareDAO(Device device) {
-        String filePath = "logs/JsonFiles/" + device.getName() + ".json";
+    public void prepareDAO(DeviceDTO deviceDTO) {
+        String filePath = "logs/JsonFiles/" + deviceDTO.getName() + ".json";
         File deviceFileName = new File(filePath);
 
         try {
             if (deviceFileName.createNewFile()) {
-                System.out.println("File created: " + deviceFileName);
+//                System.out.println("File created: " + deviceFileName);
             } else {
-                System.out.println("File already exists: " + deviceFileName);
+//                System.out.println("File already exists: " + deviceFileName);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -37,8 +38,8 @@ public class JsonDAO implements DAO {
 
     //  Метод записи данных в Json-файл устройства
     @Override
-    public void writeData(Device device, Map<String, Object> snmpData) {
-        File deviceFileName = new File("logs/JsonFiles/" + device.getName() + ".json");
+    public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
+        File deviceFileName = new File("logs/JsonFiles/" + deviceDTO.getName() + ".json");
         try {
             if (snmpData != null && !snmpData.isEmpty()) {
                 // Создаем ObjectMapper и регистрируем в нем модуль JavaTimeModule

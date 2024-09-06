@@ -3,6 +3,8 @@ package com.example.spector.domain.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -11,6 +13,6 @@ public class DeviceTypeDTO {
     private Long id;
     private String name;
     private String description;
-    private Set<Long> deviceId;
-    private Set<Long> parameterId;
+    private List<DeviceDTO> device;
+    private List<ParameterDTO> parameter;
 }

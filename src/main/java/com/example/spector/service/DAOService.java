@@ -2,6 +2,7 @@ package com.example.spector.service;
 
 import com.example.spector.dao.DAO;
 import com.example.spector.domain.Device;
+import com.example.spector.domain.dto.DeviceDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,13 @@ public class DAOService {
     @Qualifier("mongoDBDAO")
     private final DAO mongoDBDAO;
 
-    public void prepareDAO(Device device) {
-        jsonDAO.prepareDAO(device);
-        mongoDBDAO.prepareDAO(device);
+    public void prepareDAO(DeviceDTO deviceDTO) {
+        jsonDAO.prepareDAO(deviceDTO);
+        mongoDBDAO.prepareDAO(deviceDTO);
     }
 
-    public void writeData(Device device, Map<String, Object> snmpData) {
-        jsonDAO.writeData(device, snmpData);
-        mongoDBDAO.writeData(device, snmpData);
+    public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
+        jsonDAO.writeData(deviceDTO, snmpData);
+        mongoDBDAO.writeData(deviceDTO, snmpData);
     }
 }

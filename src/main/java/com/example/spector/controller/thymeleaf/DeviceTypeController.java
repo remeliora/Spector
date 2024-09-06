@@ -21,7 +21,7 @@ public class DeviceTypeController {
 
     @GetMapping("/list")
     public String getAllDeviceTypes(Model model) {
-        Iterable<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
+        List<DeviceType> deviceTypes = deviceTypeService.getAllDeviceTypes();
         List<DeviceTypeDTO> deviceTypeDTOs = new ArrayList<>();
         deviceTypes.forEach(deviceType -> deviceTypeDTOs.add(deviceTypeDTOConverter.convertToDTO(deviceType)));
         model.addAttribute("deviceTypes", deviceTypeDTOs);

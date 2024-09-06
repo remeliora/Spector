@@ -29,7 +29,7 @@ public class Parameter {
     // Связь с типом устройства
     @JsonIdentityReference(alwaysAsId = true)
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "device_type_id", referencedColumnName = "id")
     private DeviceType deviceType;
 

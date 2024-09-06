@@ -17,6 +17,7 @@ public class TypeCasterFactory {
             case STRING -> {
                 return new StringTypeCaster();
             }
+            // TODO: 27.08.2024 [Добавить логику обработки значения null]
             default -> throw new IllegalArgumentException("Unsupported data type: " + dataType);
         }
     }

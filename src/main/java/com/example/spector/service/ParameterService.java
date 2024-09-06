@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ParameterService {
@@ -16,7 +18,7 @@ public class ParameterService {
         return parameterRepository.save(parameter);
     }
 
-    public Iterable<Parameter> getAllParameters() {
+    public List<Parameter> getAllParameters() {
         return parameterRepository.findAll();
     }
 

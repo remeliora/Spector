@@ -34,7 +34,7 @@ public class ThresholdController {
 
     @GetMapping("/list")
     public String getAllThresholds(Model model) {
-        Iterable<Threshold> thresholds = thresholdService.getAllThresholds();
+        List<Threshold> thresholds = thresholdService.getAllThresholds();
         List<ThresholdDTO> thresholdDTOs = new ArrayList<>();
         thresholds.forEach(threshold -> thresholdDTOs.add(thresholdDTOConverter.convertToDTO(threshold)));
         model.addAttribute("thresholds", thresholdDTOs);
@@ -43,8 +43,8 @@ public class ThresholdController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
-        Iterable<Parameter> parameters = parameterService.getAllParameters();
-        Iterable<Device> devices = deviceService.getAllDevices();
+        List<Parameter> parameters = parameterService.getAllParameters();
+        List<Device> devices = deviceService.getAllDevices();
         List<ParameterDTO> parameterDTOs = new ArrayList<>();
         List<DeviceDTO> deviceDTOs = new ArrayList<>();
         parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));
@@ -66,8 +66,8 @@ public class ThresholdController {
     public String showEditForm(@PathVariable("id") Long thresholdId, Model model) {
         Threshold threshold = thresholdService.getThresholdById(thresholdId);
         if (threshold != null) {
-            Iterable<Parameter> parameters = parameterService.getAllParameters();
-            Iterable<Device> devices = deviceService.getAllDevices();
+            List<Parameter> parameters = parameterService.getAllParameters();
+            List<Device> devices = deviceService.getAllDevices();
             List<ParameterDTO> parameterDTOs = new ArrayList<>();
             List<DeviceDTO> deviceDTOs = new ArrayList<>();
             parameters.forEach(parameter -> parameterDTOs.add(parameterDTOConverter.convertToDTO(parameter)));

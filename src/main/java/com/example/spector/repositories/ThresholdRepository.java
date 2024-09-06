@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface ThresholdRepository extends JpaRepository<Threshold, Long> {
     List<Threshold> findThresholdByDevice(Device device);
     List<Threshold> findThresholdByParameter(Parameter parameter);
-    List<Threshold> findThresholdByParameterAndIsEnableTrue (Parameter parameter);
+    List<Threshold> findThresholdByParameterAndIsEnableTrue(Parameter parameter);
+    List<Threshold> findThresholdByParameterIdAndAndIsEnableTrue(Long parameterId);
     Threshold save(Threshold threshold);
 }

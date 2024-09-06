@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +22,7 @@ public class ThresholdService {
         return thresholdRepository.save(threshold);
     }
 
-    public Iterable<Threshold> getAllThresholds() {
+    public List<Threshold> getAllThresholds() {
         return thresholdRepository.findAll();
     }
 
@@ -43,7 +44,7 @@ public class ThresholdService {
     }
 
     public void deleteThreshold(Long thresholdId) {
-        logger.log(Level.INFO, "Starting deleteThreshold method");
+//        logger.log(Level.INFO, "Starting deleteThreshold method");
 
         Optional<Threshold> thresholdOptional = thresholdRepository.findById(thresholdId);
         if (thresholdOptional.isPresent()) {
@@ -51,6 +52,6 @@ public class ThresholdService {
             thresholdRepository.deleteById(thresholdId);
         }
 
-        logger.log(Level.INFO, "Threshold with ID {0} deleted", thresholdId);
+//        logger.log(Level.INFO, "Threshold with ID {0} deleted", thresholdId);
     }
 }

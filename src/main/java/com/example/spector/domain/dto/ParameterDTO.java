@@ -3,6 +3,7 @@ package com.example.spector.domain.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -17,5 +18,5 @@ public class ParameterDTO {
     private Double coefficient;
     private String description;
     private String dataType;
-    private Set<Long> thresholdId;
+    private List<ThresholdDTO> thresholdId;
 }

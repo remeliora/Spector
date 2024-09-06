@@ -5,6 +5,8 @@ import com.example.spector.repositories.DeviceTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class DeviceTypeService {
@@ -14,7 +16,7 @@ public class DeviceTypeService {
         return deviceTypeRepository.save(deviceType);
     }
 
-    public Iterable<DeviceType> getAllDeviceTypes() {
+    public List<DeviceType> getAllDeviceTypes() {
         return deviceTypeRepository.findAll();
     }
 

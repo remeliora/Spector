@@ -16,7 +16,6 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 public class DeviceDataService {
     private final MongoTemplate mongoTemplate;
-    private final DeviceDataRepository deviceDataRepository;
     private final DeviceDataDTOConverter deviceDataDTOConverter;
 
     private static final Logger logger = Logger.getLogger(ThresholdService.class.getName());
@@ -24,9 +23,9 @@ public class DeviceDataService {
     public void createDeviceDataCollection(String deviceName) {
         if (!mongoTemplate.collectionExists(deviceName)) {
             mongoTemplate.createCollection(deviceName);
-            System.out.println("Collection created: " + deviceName);
+//            System.out.println("Collection created: " + deviceName);
         } else {
-            System.out.println("Collection already exists: " + deviceName);
+//            System.out.println("Collection already exists: " + deviceName);
         }
     }
 
