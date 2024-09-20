@@ -1,8 +1,12 @@
 package com.example.spector.converter;
 
 import com.example.spector.domain.enums.DataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TypeCasterFactory {
+    private static final Logger logger = LoggerFactory.getLogger(TypeCasterFactory.class);
+
     public static TypeCaster getTypeCaster(DataType dataType) {
         switch (dataType) {
             case INTEGER -> {
@@ -17,8 +21,10 @@ public class TypeCasterFactory {
             case STRING -> {
                 return new StringTypeCaster();
             }
-            // TODO: 27.08.2024 [Добавить логику обработки значения null]
-            default -> throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            default -> {
+                logger.error("Unsupported data type: {}", dataType);
+                throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            }
         }
     }
 }

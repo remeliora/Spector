@@ -1,13 +1,13 @@
 package com.example.spector;
 
-import de.codecentric.boot.admin.server.config.EnableAdminServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
 @EnableAsync
 @EnableScheduling
-@EnableAdminServer
+//@EnableAdminServer
 @SpringBootApplication
 public class SpectorApplication {
 

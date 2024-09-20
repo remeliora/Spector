@@ -8,7 +8,7 @@ import com.example.spector.domain.dto.DeviceDataDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.mapper.DeviceDTOConverter;
 import com.example.spector.mapper.ParameterDTOConverter;
-import com.example.spector.service.DeviceDataService;
+import com.example.spector.database.mongodb.DeviceDataService;
 import com.example.spector.service.DeviceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;

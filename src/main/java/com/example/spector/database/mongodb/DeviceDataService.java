@@ -1,37 +1,42 @@
-package com.example.spector.service;
+package com.example.spector.database.mongodb;
 
 import com.example.spector.domain.DeviceData;
 import com.example.spector.domain.dto.DeviceDataDTO;
 import com.example.spector.mapper.DeviceDataDTOConverter;
-import com.example.spector.repositories.DeviceDataRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class DeviceDataService {
     private final MongoTemplate mongoTemplate;
     private final DeviceDataDTOConverter deviceDataDTOConverter;
-
-    private static final Logger logger = Logger.getLogger(ThresholdService.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(DeviceDataService.class);
+    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
     public void createDeviceDataCollection(String deviceName) {
         if (!mongoTemplate.collectionExists(deviceName)) {
             mongoTemplate.createCollection(deviceName);
 //            System.out.println("Collection created: " + deviceName);
+//            logger.info("Collection created: {}", deviceName);
+            deviceLogger.info("Collection created: {}", deviceName);
         } else {
 //            System.out.println("Collection already exists: " + deviceName);
+//            logger.info("Collection already exists: {}", deviceName);
         }
     }
 
     public void saveDeviceData(String deviceName, DeviceData deviceData) {
         mongoTemplate.save(deviceData, deviceName);
-        System.out.println("Data written to collection: " + deviceName);
+//        System.out.println("Data written to collection: " + deviceName);
+//        logger.info("Data written to collection: {}", deviceName);
+        deviceLogger.info("Data written to collection: {}", deviceName);
     }
 
     public List<DeviceDataDTO> getParametersByDeviceName(String deviceName) {

@@ -17,18 +17,13 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
-        <!--Шаблонизатор для минимального Frontend в web-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-freemarker</artifactId>
-        </dependency>
-
         <!--Библиотека для работы с безопасностью в проекте-->
         <!--		<dependency>-->
         <!--			<groupId>org.springframework.boot</groupId>-->
         <!--			<artifactId>spring-boot-starter-security</artifactId>-->
         <!--		</dependency>-->
 
+        <!--Шаблонизатор для минимального Frontend в web-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -40,10 +35,18 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!--		<dependency>-->
-        <!--			<groupId>org.thymeleaf.extras</groupId>-->
-        <!--			<artifactId>thymeleaf-extras-springsecurity6</artifactId>-->
-        <!--		</dependency>-->
+        <!-- Библиотеки для Spring Retry -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+            <version>2.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>6.0.13</version>
+        </dependency>
 
         <!--Инструменты для работы с Spring Boot-->
         <dependency>
@@ -84,6 +87,7 @@
             <version>6.5.0.Final</version>
             <type>pom</type>
         </dependency>
+
         <!--Драйвер для PostgreSQL-->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -124,17 +128,11 @@
             <artifactId>jackson-databind</artifactId>
             <version>2.16.1</version>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.16.1</version> <!-- Указать актуальную версию -->
-        </dependency>
-
-        <!--Библиотека для логирования-->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.13</version>
         </dependency>
 
         <!--Библиотека для консольного мониторинга приложения-->

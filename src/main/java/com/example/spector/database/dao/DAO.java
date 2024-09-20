@@ -1,4 +1,4 @@
-package com.example.spector.dao;
+package com.example.spector.database.dao;
 
 import com.example.spector.domain.Device;
 import com.example.spector.domain.dto.DeviceDTO;

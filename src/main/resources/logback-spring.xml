@@ -1,0 +1,82 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Определяем appender для логов самого приложения -->
+    <appender name="APPLICATION_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/application.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Определяем appender для логов скрипта-опроса -->
+    <appender name="SNMP_POLLING_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/snmp-polling.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="DEVICE_FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>deviceName</key>
+            <defaultValue>deviceName_IS_UNDEFINED</defaultValue>
+        </discriminator>
+
+        <sift>
+            <appender name="DEVICE_${deviceName}" class="ch.qos.logback.core.FileAppender">
+                <file>logs/devices/${deviceName}.log</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %level %logger{35} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <!-- Логируем в консоль -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="APPLICATION_FILE"/>
+    </root>
+
+    <!-- Логируем только скрипт-опрос в отдельный файл -->
+    <logger name="com.example.spector.script.SnmpPollingGetAsync" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
+    <!-- Логгер для пакета скрипта и связанных сервисов -->
+    <logger name="com.example.spector.snmp" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- Логгер для DeviceConnectionChecker -->
+    <logger name="com.example.spector.checker.DeviceConnectionChecker" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
+    <!--  Логгер для DAO  -->
+    <logger name="com.example.spector.dao" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+        <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <!--  Логгер для Converter  -->
+    <logger name="com.example.spector.converter" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
+    <!--  Логгер для MongoDB  -->
+    <logger name="com.example.spector.database.mongodb" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+        <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <logger name="DeviceLogger" level="INFO" additivity="false">
+        <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <!-- Логи веб-сервиса -->
+    <logger name="org.springframework.web" level="INFO"/>
+</configuration>

@@ -22,7 +22,7 @@ public class DBConnectionChecker {
         while (attempts < retryCount) {
             try {
                 jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-                System.out.println("Соединение с базой данных успешно установлено.");
+//                System.out.println("Соединение с базой данных успешно установлено.");
 
                 return new DBConnectionResult(true, "Соединение с базой данных успешно установлено.");
 

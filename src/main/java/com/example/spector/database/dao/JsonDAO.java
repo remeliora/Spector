@@ -1,11 +1,12 @@
-package com.example.spector.dao;
+package com.example.spector.database.dao;
 
-import com.example.spector.domain.Device;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JsonDAO implements DAO {
     private final ObjectMapper objectMapper;
+    private static final Logger logger = LoggerFactory.getLogger(JsonDAO.class);
+    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
@@ -28,8 +31,12 @@ public class JsonDAO implements DAO {
         try {
             if (deviceFileName.createNewFile()) {
 //                System.out.println("File created: " + deviceFileName);
+                logger.info("File created: {}", deviceFileName);
+                deviceLogger.info("File created: {}", deviceFileName);
             } else {
 //                System.out.println("File already exists: " + deviceFileName);
+//                logger.info("File already exists: {}", deviceFileName);
+//                deviceLogger.info("File already exists: {}", deviceFileName);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,11 +60,13 @@ public class JsonDAO implements DAO {
                 // Запись данных в файл
                 Files.write(deviceFileName.toPath(), jsonData.getBytes());
             } else {
-                System.out.println("SNMP data is null or empty");
+//                System.out.println("SNMP data is null or empty");
+                logger.error("SNMP data is null or empty");
             }
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Error writing SNMP data to file: " + e.getMessage());
+            logger.error("Error writing SNMP data to file: {}", e.getMessage());
         }
     }
 }

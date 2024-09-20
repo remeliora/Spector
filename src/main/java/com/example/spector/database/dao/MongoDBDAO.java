@@ -1,10 +1,11 @@
-package com.example.spector.dao;
+package com.example.spector.database.dao;
 
-import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceData;
 import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.service.DeviceDataService;
+import com.example.spector.database.mongodb.DeviceDataService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MongoDBDAO implements DAO {
     private final DeviceDataService deviceDataService;
+    private static final Logger logger = LoggerFactory.getLogger(MongoDBDAO.class);
 
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {

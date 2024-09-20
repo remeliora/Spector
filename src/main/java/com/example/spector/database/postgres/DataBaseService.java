@@ -1,4 +1,4 @@
-package com.example.spector.service;
+package com.example.spector.database.postgres;
 
 import com.example.spector.domain.*;
 import com.example.spector.domain.dto.DeviceDTO;
