@@ -5,23 +5,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
 @Setter
 @Document
-public class DeviceData {
+public class EnumeratedStatus {
     @Id
     private String id;
 
-    private Long deviceId;
+    private String name;  // Имя списка перечислений
 
-    private String deviceName;
-
-    private String deviceIp;
-
-    private LocalDateTime lastPollingTime;
-
-    private Map<String, Object> parameters;
+    private Map<Integer, String> enumValues;  // Ключи и значения перечислений
 }

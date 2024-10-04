@@ -25,7 +25,8 @@ public class IntegerTypeCaster implements TypeCaster<Integer> {
         } else if (variable instanceof UnsignedInteger32) {
             return (int) ((UnsignedInteger32) variable).toLong();
         } else {
-            logger.error("Unsupported Variable type for double casting: {}", variable.getClass().getSimpleName());
+            logger.error("Unsupported Variable type for integer casting: {} with value: {}",
+                    variable.getClass().getSimpleName(), variable);
             throw new IllegalArgumentException("Unsupported Variable type for integer casting: " + variable.getClass().getSimpleName());
         }
     }

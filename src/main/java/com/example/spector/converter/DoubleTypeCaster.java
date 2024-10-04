@@ -25,7 +25,8 @@ public class DoubleTypeCaster implements TypeCaster<Double> {
         } else if (variable instanceof UnsignedInteger32) {
             return (double) ((UnsignedInteger32) variable).toLong();
         } else {
-            logger.error("Unsupported Variable type for double casting: {}", variable.getClass().getSimpleName());
+            logger.error("Unsupported Variable type for double casting: {} with value: {}",
+                    variable.getClass().getSimpleName(), variable);
             throw new IllegalArgumentException("Unsupported Variable type for double casting: " + variable.getClass().getSimpleName());
         }
     }

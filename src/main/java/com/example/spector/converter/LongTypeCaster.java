@@ -24,8 +24,9 @@ public class LongTypeCaster implements TypeCaster<Long> {
         } else if (variable instanceof UnsignedInteger32) {
             return (long) ((UnsignedInteger32) variable).toLong();
         } else {
-            logger.error("Unsupported Variable type for double casting: {}", variable.getClass().getSimpleName());
-            throw new IllegalArgumentException("Unsupported Variable type for integer casting: " + variable.getClass().getSimpleName());
+            logger.error("Unsupported Variable type for long casting: {} with value: {}",
+                    variable.getClass().getSimpleName(), variable);
+            throw new IllegalArgumentException("Unsupported Variable type for long casting: " + variable.getClass().getSimpleName());
         }
     }
 }

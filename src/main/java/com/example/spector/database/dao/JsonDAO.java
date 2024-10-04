@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +26,15 @@ public class JsonDAO implements DAO {
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
+        MDC.put("deviceName", deviceDTO.getName());
+
         String filePath = "logs/JsonFiles/" + deviceDTO.getName() + ".json";
         File deviceFileName = new File(filePath);
 
         try {
             if (deviceFileName.createNewFile()) {
 //                System.out.println("File created: " + deviceFileName);
-                logger.info("File created: {}", deviceFileName);
+//                logger.info("File created: {}", deviceFileName);
                 deviceLogger.info("File created: {}", deviceFileName);
             } else {
 //                System.out.println("File already exists: " + deviceFileName);

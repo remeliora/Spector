@@ -52,7 +52,7 @@
     </logger>
 
     <!-- Логгер для DeviceConnectionChecker -->
-    <logger name="com.example.spector.checker.DeviceConnectionChecker" level="INFO" additivity="false">
+    <logger name="com.example.spector.checker" level="INFO" additivity="false">
         <appender-ref ref="SNMP_POLLING_FILE"/>
     </logger>
 
@@ -71,6 +71,11 @@
     <logger name="com.example.spector.database.mongodb" level="INFO" additivity="false">
         <appender-ref ref="SNMP_POLLING_FILE"/>
         <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <!--  Логгер для сервиса скрипта-опроса  -->
+    <logger name="com.example.spector.service.SnmpPollingService" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
     </logger>
 
     <logger name="DeviceLogger" level="INFO" additivity="false">

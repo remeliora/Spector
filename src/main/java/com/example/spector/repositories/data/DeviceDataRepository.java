@@ -1,4 +1,4 @@
-package com.example.spector.repositories;
+package com.example.spector.repositories.data;
 
 import com.example.spector.domain.DeviceData;
 import org.springframework.data.mongodb.repository.MongoRepository;

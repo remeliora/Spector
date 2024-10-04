@@ -9,7 +9,7 @@ import com.example.spector.domain.dto.DeviceTypeDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.DataType;
-import com.example.spector.service.DAOService;
+import com.example.spector.database.dao.DAOService;
 import com.example.spector.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,6 @@ import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -46,6 +45,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private final Semaphore semaphore = new Semaphore(10);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
+//    private final ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
@@ -55,28 +55,15 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         List<DeviceDTO> deviceDTOList = dataBaseService.getDeviceDTOByIsEnableTrue();
         logger.info("Devices to Poll: {}", deviceDTOList.size());
         logger.info("Waiting for all polling tasks to complete...");
+
         // Асинхронный опрос устройств
-//        List<CompletableFuture<Void>> futureDeviceList = deviceDTOList.stream()
-//                .map(deviceDTO -> CompletableFuture.runAsync(() -> pollDeviceAsync(deviceDTO)))
-////                .map(deviceDTO ->  pollDeviceAsync(deviceDTO))
-//                .toList();
-//
-//        // Ждём завершения всех задач
-//        CompletableFuture<Void> allOf = CompletableFuture.allOf(futureDeviceList.toArray(new CompletableFuture[0]));
-//        try {
-//            logger.info("Waiting for all polling tasks to complete...");
-//            allOf.get();
-//            logger.info("All polling tasks completed.");
-//        } catch (InterruptedException | ExecutionException e) {
-//            logger.error("Error occurred while polling devices: ", e);
-//            Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
-//        }
-
         // Запуск задач с задержками, чтобы избежать пиковых нагрузок
-
         for (DeviceDTO deviceDTO : deviceDTOList) {
-            scheduler.schedule(() -> pollDeviceAsync(deviceDTO), 0, TimeUnit.SECONDS); // можно добавить интервал для задержки
+            scheduler.schedule(() -> pollDeviceAsync(deviceDTO), 3, TimeUnit.SECONDS); // можно добавить интервал для задержки
         }
+
+        // Ожидание завершения всех задач
+        logger.info("Polling tasks scheduled for all devices.");
     }
 
     @Async("taskExecutor")
@@ -84,18 +71,18 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         // Проверка на наличие файла устройства и его создание
         daoService.prepareDAO(deviceDTO);
         MDC.put("deviceName", deviceDTO.getName());
-        
-        try {
-            semaphore.acquire();  // Ограничиваем число одновременных потоков
-            retryPollDevice(deviceDTO); // Добавляем ретраи с задержками
 
-        } catch (InterruptedException | IOException e) {
+        try {
+            semaphore.acquire();    // Ограничиваем число одновременных потоков
+            retryPollDevice(deviceDTO); // Добавляем ретраи с задержками
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Error during polling device {}: ", deviceDTO.getName(), e);
+            logger.error("Polling interrupted for device {}: ", deviceDTO.getName(), e);
+        } catch (IOException e) {
+            logger.error("IOException during polling device {}: ", deviceDTO.getName(), e);
         } finally {
-            logger.info("All polling tasks completed.");
             MDC.clear();
-            semaphore.release();  // Освобождаем семафор
+            semaphore.release();    // Освобождаем семафор
         }
 
         return CompletableFuture.completedFuture(null);
@@ -105,7 +92,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     @Retryable(
             value = { IOException.class },
             maxAttempts = 3,
-            backoff = @Backoff(delay = 2000))  // Ретрай с задержкой 2 секунды
+            backoff = @Backoff(delay = 3000))  // Ретрай с задержкой 3 секунды
     public void retryPollDevice(DeviceDTO deviceDTO) throws IOException {
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
@@ -128,7 +115,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         // Устройство опрашивается впервые
         if (lastPullingTime == null) {
 //            System.out.println("Device: " + deviceDTO.getName() + " - Is Time For Polling: " + currentTime);
-//            logger.info("Device: {} - Is Time For Polling: {}", deviceDTO.getName(), currentTime);
             deviceLogger.info("Device: {} - Is Time For Polling: {}", deviceDTO.getName(), currentTime);
             schedule.put(deviceId, currentTime);
 
@@ -141,14 +127,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
         if (isTimeForPolling) {
 //            System.out.println("Device: " + deviceDTO.getName() + " - Last Pulling Time: " + lastPullingTime + " - Current Time: " + currentTime);
-//            logger.info("Device: {} - Last Pulling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
             deviceLogger.info("Device: {} - Last Pulling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
             schedule.put(deviceId, currentTime);
 
             return true;
         } else {
 //            System.out.println("Device: " + deviceDTO.getName() + " - Not Yet Time For Polling. Last Polling Time: " + lastPullingTime + " - Current Time: " + currentTime);
-//            logger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
             deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
 
             return false;
@@ -157,7 +141,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
     private Map<String, Object> snmpPoll(DeviceDTO deviceDTO) {
 
-        Map<String, Object> snmpData = new HashMap<>();
+//        Map<String, Object> snmpData = new HashMap<>();
+        ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
         snmpData.put("deviceId", deviceDTO.getId());
         snmpData.put("deviceName", deviceDTO.getName());
         snmpData.put("deviceIp", deviceDTO.getIpAddress());
@@ -179,7 +164,15 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             snmp.listen();
 
             List<CompletableFuture<Void>> futureParameterList = parameterDTOList.stream()
-                    .map(parameterDTO -> CompletableFuture.runAsync(() -> pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp)))
+                    .map(parameterDTO -> CompletableFuture.runAsync(() -> {
+                        try {
+                            pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            logger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+                            deviceLogger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+                        }
+                    }))
                     .toList();
 
             CompletableFuture<Void> allOf = CompletableFuture.allOf(futureParameterList.toArray(new CompletableFuture[0]));
@@ -201,26 +194,38 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     @Async("taskExecutor")
     public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Map<String, Object> snmpData, Snmp snmp) {
         MDC.put("deviceName", deviceDTO.getName());
-        OID oid = new OID(parameterDTO.getAddress());
-        PDU pdu = new PDU();
-        pdu.add(new VariableBinding(oid));
-        pdu.setType(PDU.GET);
+        try {
+            OID oid = new OID(parameterDTO.getAddress());
+            PDU pdu = new PDU();
+            pdu.add(new VariableBinding(oid));
+            pdu.setType(PDU.GET);
 
-        VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
+            VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
 //        System.out.println("Parameter Address: " + parameterDTO.getAddress());
 //        deviceLogger.info("Parameter Address: {}", parameterDTO.getAddress());
 
-        Variable variable = result.getVariable();
-        List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
-        DataType dataType = DataType.valueOf(parameterDTO.getDataType());
-        TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
-        Object castValue = castTo(dataType, variable, typeCaster);
-        Object processedValue = applyModifications(dataType, castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+            Variable variable = result.getVariable();
+            List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
+            DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
+            Object castValue = castTo(dataType, variable, typeCaster);
+            Object processedValue = applyModifications(dataType, castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
 //        System.out.println("Result Variable: " + processedValue);
-        deviceLogger.info("Parameter ({}) have result Variable: {}",parameterDTO.getName(), processedValue);
+            deviceLogger.info("Parameter ({}): {}", parameterDTO.getName(), processedValue);
+            // Проверка на пороговые значения
+            checkThresholds(processedValue, thresholdDTOList, deviceDTO);
+            snmpData.put(parameterDTO.getName(), processedValue);
 
-        checkThresholds(processedValue, thresholdDTOList, deviceDTO);
-        snmpData.put(parameterDTO.getName(), processedValue);
+            // Потокобезопасная запись данных
+            synchronized (snmpData) {
+                snmpData.put(parameterDTO.getName(), processedValue);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+        } finally {
+            MDC.clear();  // Очищаем MDC после завершения
+        }
 
         return CompletableFuture.completedFuture(null);
     }

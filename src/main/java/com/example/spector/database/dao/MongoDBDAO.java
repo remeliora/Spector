@@ -18,7 +18,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MongoDBDAO implements DAO {
     private final DeviceDataService deviceDataService;
-    private static final Logger logger = LoggerFactory.getLogger(MongoDBDAO.class);
 
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
