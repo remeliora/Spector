@@ -14,12 +14,14 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
+
 @Component
 @Qualifier("jsonDAO")
 @RequiredArgsConstructor
 public class JsonDAO implements DAO {
-    private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(JsonDAO.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
@@ -28,47 +30,55 @@ public class JsonDAO implements DAO {
     public void prepareDAO(DeviceDTO deviceDTO) {
         MDC.put("deviceName", deviceDTO.getName());
 
-        String filePath = "logs/JsonFiles/" + deviceDTO.getName() + ".json";
-        File deviceFileName = new File(filePath);
+        Path dirPath = Paths.get("logs/JsonFiles");
+        try {
+            Files.createDirectories(dirPath);
+        } catch (IOException e) {
+//            e.printStackTrace();
+            logger.error("Failed to create directories for JSON files", e);
+
+            return;
+        }
+
+//        String filePath = "logs/JsonFiles/" + deviceDTO.getName() + ".json";
+        Path filePath = dirPath.resolve(deviceDTO.getName() + ".json");
+        File deviceFileName = filePath.toFile();
 
         try {
             if (deviceFileName.createNewFile()) {
 //                System.out.println("File created: " + deviceFileName);
 //                logger.info("File created: {}", deviceFileName);
                 deviceLogger.info("File created: {}", deviceFileName);
-            } else {
-//                System.out.println("File already exists: " + deviceFileName);
-//                logger.info("File already exists: {}", deviceFileName);
-//                deviceLogger.info("File already exists: {}", deviceFileName);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            logger.error("Failed to create or check JSON file: {}", filePath, e);
         }
     }
 
     //  Метод записи данных в Json-файл устройства
     @Override
     public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
-        File deviceFileName = new File("logs/JsonFiles/" + deviceDTO.getName() + ".json");
+        Path filePath = Paths.get("logs/JsonFiles", deviceDTO.getName() + ".json");
+        File deviceFileName = filePath.toFile();
+
+        if (snmpData == null && snmpData.isEmpty()) {
+            logger.error("SNMP data is null or empty for device: {}", deviceDTO.getName());
+            return;
+        }
         try {
-            if (snmpData != null && !snmpData.isEmpty()) {
-                // Создаем ObjectMapper и регистрируем в нем модуль JavaTimeModule
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
-                objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-                // Преобразование данных в формат JSON
-                String jsonData = objectMapper.writeValueAsString(snmpData);
+            // Преобразование данных в формат JSON
+            String jsonData = objectMapper.writeValueAsString(snmpData);
 
-                // Запись данных в файл
-                Files.write(deviceFileName.toPath(), jsonData.getBytes());
-            } else {
-//                System.out.println("SNMP data is null or empty");
-                logger.error("SNMP data is null or empty");
-            }
+            // Запись данных в файл
+            Files.writeString(deviceFileName.toPath(), jsonData);
         } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error writing SNMP data to file: " + e.getMessage());
+//            e.printStackTrace();
+//            System.out.println("Error writing SNMP data to file: " + e.getMessage());
             logger.error("Error writing SNMP data to file: {}", e.getMessage());
         }
     }

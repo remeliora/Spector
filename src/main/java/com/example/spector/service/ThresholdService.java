@@ -3,12 +3,10 @@ package com.example.spector.service;
 import com.example.spector.domain.Threshold;
 import com.example.spector.repositories.ThresholdRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service

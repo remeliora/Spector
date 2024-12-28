@@ -21,6 +21,8 @@ public class Threshold {
 
     private Double lowValue;
 
+    private Integer matchExact;
+
     private Double highValue;
 
     private Boolean isEnable;

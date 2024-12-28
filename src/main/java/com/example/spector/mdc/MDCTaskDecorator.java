@@ -1,5 +1,6 @@
 package com.example.spector.mdc;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.task.TaskDecorator;
@@ -9,7 +10,7 @@ import java.util.Map;
 @Slf4j
 public class MDCTaskDecorator implements TaskDecorator {
     @Override
-    public Runnable decorate(Runnable runnable) {
+    public @NonNull Runnable decorate(@NonNull Runnable runnable) {
         Map<String, String> contextMap = MDC.getCopyOfContextMap(); // Сохраняем контекст MDC
         return () -> {
             if (contextMap != null) {

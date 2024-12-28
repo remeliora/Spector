@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 public class TypeCasterFactory {
     private static final Logger logger = LoggerFactory.getLogger(TypeCasterFactory.class);
 
-    public static TypeCaster getTypeCaster(DataType dataType) {
+    public static TypeCaster<?> getTypeCaster(DataType dataType) {
         switch (dataType) {
             case INTEGER -> {
                 return new IntegerTypeCaster();

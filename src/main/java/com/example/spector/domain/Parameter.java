@@ -11,7 +11,6 @@ import lombok.Setter;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -38,6 +37,8 @@ public class Parameter {
     private Double additive;
 
     private Double coefficient;
+
+    private Boolean isEnumeratedStatus;
 
     private String description;
 

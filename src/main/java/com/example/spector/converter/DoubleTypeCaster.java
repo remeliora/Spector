@@ -15,7 +15,7 @@ public class DoubleTypeCaster implements TypeCaster<Double> {
         }
 
         if (variable instanceof Integer32) {
-            return (double) ((Integer32) variable).toInt();
+            return (double) variable.toInt();
         } else if (variable instanceof Counter32) {
             return (double) ((Counter32) variable).getValue();
         } else if (variable instanceof Gauge32) {
@@ -23,7 +23,7 @@ public class DoubleTypeCaster implements TypeCaster<Double> {
         } else if (variable instanceof Counter64) {
             return (double) ((Counter64) variable).getValue();
         } else if (variable instanceof UnsignedInteger32) {
-            return (double) ((UnsignedInteger32) variable).toLong();
+            return (double) variable.toLong();
         } else {
             logger.error("Unsupported Variable type for double casting: {} with value: {}",
                     variable.getClass().getSimpleName(), variable);

@@ -1,7 +1,6 @@
 package com.example.spector.service;
 
-import com.example.spector.checker.DBChecker;
-import com.example.spector.checker.DeviceConnectionChecker;
+import com.example.spector.checker.db.DBChecker;
 import com.example.spector.script.SnmpPollingGetAsync;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -17,8 +16,7 @@ import java.util.List;
 public class SnmpPollingService {   //Сервис для взаимодействия со скриптом опроса
     private final SnmpPollingGetAsync snmpPollingGetAsync;
     private final List<DBChecker> dbCheckers; // Внедряются все реализации DBChecker
-
-    private static final Logger logger = LoggerFactory.getLogger(DeviceConnectionChecker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SnmpPollingService.class);
 
     @Async
     @Scheduled(fixedDelay = 15000)

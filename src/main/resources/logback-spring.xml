@@ -52,8 +52,20 @@
     </logger>
 
     <!-- Логгер для DeviceConnectionChecker -->
-    <logger name="com.example.spector.checker" level="INFO" additivity="false">
+    <logger name="com.example.spector.checker.device.DeviceConnectionChecker" level="INFO" additivity="false">
         <appender-ref ref="SNMP_POLLING_FILE"/>
+        <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <!-- Логгер для DBChecker -->
+    <logger name="com.example.spector.checker.db" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
+    <!-- Логгер для ThresholdChecker -->
+    <logger name="com.example.spector.checker.threshold" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+        <appender-ref ref="DEVICE_FILE"/>
     </logger>
 
     <!--  Логгер для DAO  -->

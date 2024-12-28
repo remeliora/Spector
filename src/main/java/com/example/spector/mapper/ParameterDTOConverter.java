@@ -5,7 +5,6 @@ import com.example.spector.domain.dto.ParameterDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.ui.Model;
 
 @Component
 @RequiredArgsConstructor

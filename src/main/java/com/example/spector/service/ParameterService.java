@@ -1,10 +1,8 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.Device;
 import com.example.spector.domain.Parameter;
 import com.example.spector.repositories.ParameterRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

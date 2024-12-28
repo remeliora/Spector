@@ -1,6 +1,5 @@
-package com.example.spector.checker;
+package com.example.spector.checker.db;
 
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -8,11 +7,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
-public class MongoDBChecker implements DBChecker{
-    @Qualifier("deviceDataMongoTemplate")
+public class MongoDBChecker implements DBChecker {
     private final MongoTemplate deviceDataMongoTemplate;
-    private static final Logger logger = LoggerFactory.getLogger(DeviceConnectionChecker.class);
+
+    public MongoDBChecker(@Qualifier("databaseDeviceDataMongoTemplate") MongoTemplate deviceDataMongoTemplate) {
+        this.deviceDataMongoTemplate = deviceDataMongoTemplate;
+    }
+    private static final Logger logger = LoggerFactory.getLogger(MongoDBChecker.class);
+
     @Override
     public boolean isAccessible(int retryCount) {
         int attempts = 0;

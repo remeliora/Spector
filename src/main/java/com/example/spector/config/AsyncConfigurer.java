@@ -14,9 +14,9 @@ public class AsyncConfigurer {
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);  // Основное количество потоков
-        executor.setMaxPoolSize(50);   // Максимальное количество потоков
-        executor.setQueueCapacity(500); // Максимальная очередь задач
+        executor.setCorePoolSize(50);  // Основное количество потоков
+        executor.setMaxPoolSize(100);   // Максимальное количество потоков
+        executor.setQueueCapacity(1000); // Максимальная очередь задач
         executor.setThreadNamePrefix("AsyncExecutor-");
         // Устанавливаем декоратор для задач
         executor.setTaskDecorator(new MDCTaskDecorator());

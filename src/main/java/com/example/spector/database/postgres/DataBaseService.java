@@ -32,10 +32,6 @@ public class DataBaseService {  //Файл для работы с репозит
     private final ThresholdRepository thresholdRepository;
     private final ThresholdDTOConverter thresholdDTOConverter;
 
-//    public List<DeviceType> getAllDeviceTypes() {
-//        return deviceTypeRepository.findAll();
-//    }
-
     public DeviceType getDeviceTypeById(Long id) {
         return deviceTypeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Device Type not found"));
@@ -45,62 +41,11 @@ public class DataBaseService {  //Файл для работы с репозит
         return deviceTypeDTOConverter.convertToDTO(deviceType);
     }
 
-//    public List<Device> getAllDevices() {
-//        return deviceRepository.findAll();
-//    }
-
-//    public Device getDeviceById(Long id) {
-//        return deviceRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Device not found"));
-//    }
-//
-//    public DeviceDTO convertDeviceTypeToDTO(Device device) {
-//        return deviceDTOConverter.convertToDTO(device);
-//    }
-
-//    public List<Parameter> getAllParameters() {
-//        return parameterRepository.findAll();
-//    }
-
-//    public Parameter getParameterById(Long id) {
-//        return parameterRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Parameter not found"));
-//    }
-//
-//    public ParameterDTO convertParameterToDTO(Parameter parameter) {
-//        return parameterDTOConverter.convertToDTO(parameter);
-//    }
-
-//    public List<Threshold> getAllThresholds() {
-//        return thresholdRepository.findAll();
-//    }
-
-//    public Threshold getThresholdById(Long id) {
-//        return thresholdRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Threshold not found"));
-//    }
-//
-//    public ThresholdDTO convertThresholdToDTO(Threshold threshold) {
-//        return thresholdDTOConverter.convertToDTO(threshold);
-//    }
-
-//    public Device getDeviceByName(String name) {
-//        return deviceRepository.findByName(name);
-//    }
-//
-//    public List<Device> getDeviceByIsEnableTrue() {
-//        return deviceRepository.findDeviceByIsEnableTrue();
-//    }
-
     public List<DeviceDTO> getDeviceDTOByIsEnableTrue() {
         return deviceRepository.findDeviceByIsEnableTrue().stream()
                 .map(deviceDTOConverter::convertToDTO)
                 .collect(Collectors.toList());
     }
-
-//    public List<Parameter> getParameterByDeviceType(DeviceType deviceType) {
-//        return parameterRepository.findParameterByDeviceType(deviceType);
-//    }
 
     public List<ParameterDTO> getParameterDTOByDeviceType(DeviceType deviceType) {
         return parameterRepository.findParameterByDeviceType(deviceType).stream()
@@ -108,20 +53,8 @@ public class DataBaseService {  //Файл для работы с репозит
                 .collect(Collectors.toList());
     }
 
-//    public List<Threshold> getThresholdsByParameter(Parameter parameter) {
-//        return thresholdRepository.findThresholdByParameter(parameter);
-//    }
-//
-//    public List<Threshold> getThresholdsByDevice(Device device) {
-//        return thresholdRepository.findThresholdByDevice(device);
-//    }
-//
-//    public List<Threshold> getThresholdsByParameterAndIsEnableTrue(Parameter parameter) {
-//        return thresholdRepository.findThresholdByParameterAndIsEnableTrue(parameter);
-//    }
-
     public List<ThresholdDTO> getThresholdsByParameterDTOAndIsEnableTrue(ParameterDTO parameterDTO) {
-        List<Threshold> thresholds = thresholdRepository.findThresholdByParameterIdAndAndIsEnableTrue(parameterDTO.getId());
+        List<Threshold> thresholds = thresholdRepository.findThresholdByParameterIdAndIsEnableTrue(parameterDTO.getId());
         return thresholds.stream()
                 .map(thresholdDTOConverter::convertToDTO)
                 .collect(Collectors.toList());

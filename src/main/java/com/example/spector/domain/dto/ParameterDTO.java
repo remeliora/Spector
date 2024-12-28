@@ -16,6 +16,7 @@ public class ParameterDTO {
     private String metric;
     private Double additive;
     private Double coefficient;
+    private Boolean isEnumeratedStatus;
     private String description;
     private String dataType;
     private List<ThresholdDTO> thresholdId;

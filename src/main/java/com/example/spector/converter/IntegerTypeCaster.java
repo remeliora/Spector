@@ -15,7 +15,7 @@ public class IntegerTypeCaster implements TypeCaster<Integer> {
         }
 
         if (variable instanceof Integer32) {
-            return ((Integer32) variable).toInt();
+            return variable.toInt();
         } else if (variable instanceof Counter32) {
             return (int) ((Counter32) variable).getValue();
         } else if (variable instanceof Gauge32) {
@@ -23,7 +23,7 @@ public class IntegerTypeCaster implements TypeCaster<Integer> {
         } else if (variable instanceof Counter64) {
             return (int) ((Counter64) variable).getValue();
         } else if (variable instanceof UnsignedInteger32) {
-            return (int) ((UnsignedInteger32) variable).toLong();
+            return (int) variable.toLong();
         } else {
             logger.error("Unsupported Variable type for integer casting: {} with value: {}",
                     variable.getClass().getSimpleName(), variable);

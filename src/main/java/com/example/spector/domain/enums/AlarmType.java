@@ -4,5 +4,5 @@ public enum AlarmType {
     INACTION,
     LOCAL,
     GLOBAL,
-    EVERYWHERE;
+    EVERYWHERE
 }

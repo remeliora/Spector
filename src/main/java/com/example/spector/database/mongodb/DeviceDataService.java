@@ -3,7 +3,6 @@ package com.example.spector.database.mongodb;
 import com.example.spector.domain.DeviceData;
 import com.example.spector.domain.dto.DeviceDataDTO;
 import com.example.spector.mapper.DeviceDataDTOConverter;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,11 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class DeviceDataService {
-    @Qualifier("deviceDataMongoTemplate")
     private final MongoTemplate deviceDataMongoTemplate;
     private final DeviceDataDTOConverter deviceDataDTOConverter;
+
+    public DeviceDataService(@Qualifier("databaseDeviceDataMongoTemplate") MongoTemplate deviceDataMongoTemplate,
+                             DeviceDataDTOConverter deviceDataDTOConverter) {
+        this.deviceDataMongoTemplate = deviceDataMongoTemplate;
+        this.deviceDataDTOConverter = deviceDataDTOConverter;
+    }
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
     public void createDeviceDataCollection(String deviceName) {
@@ -27,10 +30,6 @@ public class DeviceDataService {
 //            System.out.println("Collection created: " + deviceName);
             deviceLogger.info("Collection created: {}", deviceName);
         }
-//        else {
-////            System.out.println("Collection already exists: " + deviceName);
-////            logger.info("Collection already exists: {}", deviceName);
-//        }
     }
 
     public void saveDeviceData(String deviceName, DeviceData deviceData) {

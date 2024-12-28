@@ -14,15 +14,15 @@ public class LongTypeCaster implements TypeCaster<Long> {
         }
 
         if (variable instanceof Integer32) {
-            return (long) ((Integer32) variable).toInt();
+            return (long) variable.toInt();
         } else if (variable instanceof Counter32) {
-            return (long) ((Counter32) variable).getValue();
+            return ((Counter32) variable).getValue();
         } else if (variable instanceof Gauge32) {
-            return (long) ((Gauge32) variable).getValue();
+            return ((Gauge32) variable).getValue();
         } else if (variable instanceof Counter64) {
-            return (long) ((Counter64) variable).getValue();
+            return ((Counter64) variable).getValue();
         } else if (variable instanceof UnsignedInteger32) {
-            return (long) ((UnsignedInteger32) variable).toLong();
+            return variable.toLong();
         } else {
             logger.error("Unsupported Variable type for long casting: {} with value: {}",
                     variable.getClass().getSimpleName(), variable);

@@ -17,6 +17,7 @@ import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,21 +33,16 @@ public class SNMPServiceImpl implements SNMPService{
         try (Snmp snmp = new Snmp(new DefaultUdpTransportMapping())){
             snmp.listen();
 
-            CommunityTarget target = createTarget(ipAddress);
+            CommunityTarget<UdpAddress> target = createTarget(ipAddress);
 
             PDU pdu = new PDU();
             pdu.setType(PDU.GET);
 
             ResponseEvent<?> responseEvent = snmp.send(pdu, target);
 
-            if (responseEvent.getResponse() != null && responseEvent.getResponse().getErrorStatus() == PDU.noError) {
-                return true;
-            } else {
-//                System.out.println("Device " + ipAddress + " is not reachable by SNMP.");
-//                logger.error("Device {} is not reachable by SNMP.", ipAddress);
-
-                return false;
-            }
+            //                System.out.println("Device " + ipAddress + " is not reachable by SNMP.");
+            //                logger.error("Device {} is not reachable by SNMP.", ipAddress);
+            return responseEvent.getResponse() != null && responseEvent.getResponse().getErrorStatus() == PDU.noError;
         } catch (IOException e) {
 //            System.out.println("SNMP access error: " + e.getMessage());
 //            logger.error("SNMP access error: {}", e.getMessage());
@@ -61,7 +57,7 @@ public class SNMPServiceImpl implements SNMPService{
         VariableBinding result = new VariableBinding();
 
         try {
-            CommunityTarget target = createTarget(deviceIp);
+            CommunityTarget<UdpAddress> target = createTarget(deviceIp);
             VariableBinding finalResult = result;
             ResponseListener listener = new ResponseListener() {
                 @Override
@@ -70,14 +66,16 @@ public class SNMPServiceImpl implements SNMPService{
                     PDU response = responseEvent.getResponse();
 
                     if (response != null && response.getErrorStatus() == PDU.noError) {
-                        finalResult.setVariable(response.getVariableBindings().stream().findFirst().get().getVariable());
+//                        finalResult.setVariable(response.getVariableBindings().stream().findFirst().get().getVariable());
+                        Optional<? extends VariableBinding> firstBinding = response.getVariableBindings().stream().findFirst();
+                        firstBinding.ifPresent(variableBinding -> finalResult.setVariable(variableBinding.getVariable()));
                     }
                     futureResult.complete(finalResult);
                 }
             };
 
             snmp.send(pdu, target, null, listener);
-            result = futureResult.get(3, TimeUnit.SECONDS);
+            result = futureResult.get(5, TimeUnit.SECONDS);
 
         } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
             e.printStackTrace();
@@ -86,13 +84,13 @@ public class SNMPServiceImpl implements SNMPService{
         return result;
     }
 
-    private CommunityTarget createTarget(String ipAddress) {
-        CommunityTarget target = new CommunityTarget();
+    private CommunityTarget<UdpAddress> createTarget(String ipAddress) {
+        CommunityTarget<UdpAddress> target = new CommunityTarget<>();
         target.setCommunity(new OctetString("public"));
         target.setAddress(new UdpAddress(ipAddress + "/161"));
         target.setVersion(SnmpConstants.version1);
         target.setRetries(3);
-        target.setTimeout(3000);
+        target.setTimeout(5000);
         return target;
     }
 }

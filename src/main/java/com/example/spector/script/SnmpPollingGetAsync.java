@@ -1,15 +1,18 @@
 package com.example.spector.script;
 
-import com.example.spector.checker.DeviceConnectionChecker;
+import com.example.spector.checker.device.DeviceConnectionChecker;
+import com.example.spector.checker.threshold.ThresholdChecker;
+import com.example.spector.checker.threshold.ThresholdCheckerFactory;
 import com.example.spector.converter.TypeCaster;
 import com.example.spector.converter.TypeCasterFactory;
+import com.example.spector.database.dao.DAOService;
+import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.database.postgres.DataBaseService;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.DeviceTypeDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.DataType;
-import com.example.spector.database.dao.DAOService;
 import com.example.spector.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +33,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 @Component
@@ -40,12 +43,12 @@ import java.util.concurrent.*;
 public class SnmpPollingGetAsync {   // Класс скрипта опроса по протоколу SNMP
     private final DataBaseService dataBaseService;
     private final DAOService daoService;
+    private final EnumeratedStatusService enumeratedStatusService;
     private final DeviceConnectionChecker deviceConnectionChecker;
     private final SNMPService snmpService;
     private final Semaphore semaphore = new Semaphore(10);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
-//    private final ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
@@ -92,7 +95,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     @Retryable(
             value = { IOException.class },
             maxAttempts = 3,
-            backoff = @Backoff(delay = 3000))  // Ретрай с задержкой 3 секунды
+            backoff = @Backoff(delay = 5000))  // Ретрай с задержкой 3 секунды
     public void retryPollDevice(DeviceDTO deviceDTO) throws IOException {
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
@@ -140,8 +143,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     }
 
     private Map<String, Object> snmpPoll(DeviceDTO deviceDTO) {
-
-//        Map<String, Object> snmpData = new HashMap<>();
         ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
         snmpData.put("deviceId", deviceDTO.getId());
         snmpData.put("deviceName", deviceDTO.getName());
@@ -209,12 +210,19 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             DataType dataType = DataType.valueOf(parameterDTO.getDataType());
             TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
             Object castValue = castTo(dataType, variable, typeCaster);
-            Object processedValue = applyModifications(dataType, castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
-//        System.out.println("Result Variable: " + processedValue);
+            ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
+
+            Object processedValue;
+            if (parameterDTO.getIsEnumeratedStatus()) {
+                Integer intValue = (Integer) castValue;
+                checker.checkThresholds(intValue, thresholdDTOList, deviceDTO);
+                processedValue = processEnumeratedStatus(parameterDTO, castValue);
+            } else {
+                processedValue = processRegularParameter(parameterDTO, castValue);
+                checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
+            }
+
             deviceLogger.info("Parameter ({}): {}", parameterDTO.getName(), processedValue);
-            // Проверка на пороговые значения
-            checkThresholds(processedValue, thresholdDTOList, deviceDTO);
-            snmpData.put(parameterDTO.getName(), processedValue);
 
             // Потокобезопасная запись данных
             synchronized (snmpData) {
@@ -230,40 +238,35 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         return CompletableFuture.completedFuture(null);
     }
 
-    private void checkThresholds(Object processedValue, List<ThresholdDTO> thresholdDTOList, DeviceDTO deviceDTO) {
-        for (ThresholdDTO thresholdDTO : thresholdDTOList) {
-            if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
-                double lowValue = thresholdDTO.getLowValue();
-                double highValue = thresholdDTO.getHighValue();
+    private Object processRegularParameter(ParameterDTO parameterDTO, Object castValue) {
+        return applyModifications(DataType.valueOf(parameterDTO.getDataType()), castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+    }
 
-                if ((double) processedValue < lowValue || (double) processedValue > highValue) {
-//                    System.out.println("Threshold crossed: Parameter " + thresholdDTO.getParameter().getName() +
-//                            " with value " + processedValue + " is out of range [" + lowValue + ", " + highValue + "]");
-                    logger.error("Threshold crossed: Parameter {} with value {} is out of range [{}, {}]",
-                            thresholdDTO.getParameter().getName(), processedValue, lowValue, highValue);
-                    deviceLogger.error("Threshold crossed: Parameter {} with value {} is out of range [{}, {}]",
-                            thresholdDTO.getParameter().getName(), processedValue, lowValue, highValue);
-                } else {
-//                    System.out.println("Threshold successful");
-//                    logger.info("Threshold successful");
-                    deviceLogger.info("Threshold successful");
-                }
-            }
+    private Object processEnumeratedStatus(ParameterDTO parameterDTO, Object castValue) {
+        if (castValue instanceof Integer intValue) {
+
+            // Получаем карту статусов для параметра
+            Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
+
+            return Optional.ofNullable(statusMap.get(intValue))
+                    .orElseGet(() -> {
+                        logger.error("Enum value not found for key: {} in parameter: {}", intValue, parameterDTO.getName());
+
+                        return "Unknown status";
+                    });
+        } else {
+            logger.error("Cast value is not an integer: {}", castValue);
+
+            return "Invalid status";
         }
     }
 
     private Object applyModifications(DataType dataType, Object castValue,
                                       Double additive, Double coefficient) {
         switch (dataType) {
-            case INTEGER -> {
-                castValue = (int) (((int) castValue + additive) * coefficient);
-            }
-            case DOUBLE -> {
-                castValue = (((double) castValue + additive) * coefficient);
-            }
-            case LONG -> {
-                castValue = (long) (((long) castValue + additive) * coefficient);
-            }
+            case INTEGER -> castValue = (int) (((int) castValue + additive) * coefficient);
+            case DOUBLE -> castValue = (((double) castValue + additive) * coefficient);
+            case LONG -> castValue = (long) (((long) castValue + additive) * coefficient);
             default -> {
                 logger.error("Unsupported data type: {}", dataType);
                 deviceLogger.error("Unsupported data type: {}", dataType);
