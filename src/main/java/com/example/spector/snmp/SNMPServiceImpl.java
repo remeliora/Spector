@@ -39,9 +39,8 @@ public class SNMPServiceImpl implements SNMPService{
             pdu.setType(PDU.GET);
 
             ResponseEvent<?> responseEvent = snmp.send(pdu, target);
-
-            //                System.out.println("Device " + ipAddress + " is not reachable by SNMP.");
-            //                logger.error("Device {} is not reachable by SNMP.", ipAddress);
+//            System.out.println("Device " + ipAddress + " is not reachable by SNMP.");
+//            logger.error("Device {} is not reachable by SNMP.", ipAddress);
             return responseEvent.getResponse() != null && responseEvent.getResponse().getErrorStatus() == PDU.noError;
         } catch (IOException e) {
 //            System.out.println("SNMP access error: " + e.getMessage());

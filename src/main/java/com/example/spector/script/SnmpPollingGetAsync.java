@@ -46,8 +46,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private final EnumeratedStatusService enumeratedStatusService;
     private final DeviceConnectionChecker deviceConnectionChecker;
     private final SNMPService snmpService;
-    private final Semaphore semaphore = new Semaphore(10);
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+//    private final Semaphore semaphore = new Semaphore(20);
+//    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
@@ -56,36 +56,41 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     @Transactional
     public void pollDevices() {
         List<DeviceDTO> deviceDTOList = dataBaseService.getDeviceDTOByIsEnableTrue();
-        logger.info("Devices to Poll: {}", deviceDTOList.size());
-        logger.info("Waiting for all polling tasks to complete...");
+        logger.info("Кол-во устройств: {}", deviceDTOList.size());
+        logger.info("Ожидание завершения всех задач опроса...");
 
         // Асинхронный опрос устройств
         // Запуск задач с задержками, чтобы избежать пиковых нагрузок
-        for (DeviceDTO deviceDTO : deviceDTOList) {
-            scheduler.schedule(() -> pollDeviceAsync(deviceDTO), 3, TimeUnit.SECONDS); // можно добавить интервал для задержки
-        }
+//        for (DeviceDTO deviceDTO : deviceDTOList) {
+//            scheduler.schedule(() -> pollDeviceAsync(deviceDTO), 1, TimeUnit.SECONDS); // можно добавить интервал для задержки
+//        }
+
+        deviceDTOList.forEach(this::pollDeviceAsync);
 
         // Ожидание завершения всех задач
-        logger.info("Polling tasks scheduled for all devices.");
+        logger.info("Задачи опроса проведены для всех устройств.");
     }
 
     @Async("taskExecutor")
     public CompletableFuture<Void> pollDeviceAsync(DeviceDTO deviceDTO) {
         // Проверка на наличие файла устройства и его создание
+        long startTime = System.currentTimeMillis();
         daoService.prepareDAO(deviceDTO);
         MDC.put("deviceName", deviceDTO.getName());
 
         try {
-            semaphore.acquire();    // Ограничиваем число одновременных потоков
+//            semaphore.acquire();    // Ограничиваем число одновременных потоков
             retryPollDevice(deviceDTO); // Добавляем ретраи с задержками
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Polling interrupted for device {}: ", deviceDTO.getName(), e);
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//            logger.error("Polling interrupted for device {}: ", deviceDTO.getName(), e);
         } catch (IOException e) {
-            logger.error("IOException during polling device {}: ", deviceDTO.getName(), e);
+            logger.error("IOException во время опроса {}: ", deviceDTO.getName(), e);
         } finally {
+            long endTime = System.currentTimeMillis();
+            deviceLogger.info("Опрос {} занял {} мс.", deviceDTO.getName(), endTime - startTime);
             MDC.clear();
-            semaphore.release();    // Освобождаем семафор
+//            semaphore.release();    // Освобождаем семафор
         }
 
         return CompletableFuture.completedFuture(null);
@@ -94,16 +99,16 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     // Механизм ретраев
     @Retryable(
             value = { IOException.class },
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 5000))  // Ретрай с задержкой 3 секунды
+//            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2))  // Ретрай с задержкой 3 секунды
     public void retryPollDevice(DeviceDTO deviceDTO) throws IOException {
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
                 Map<String, Object> snmpData = snmpPoll(deviceDTO);
                 daoService.writeData(deviceDTO, snmpData);
             } else {
-                logger.error("Device {} is not available. Skipping...", deviceDTO.getName());
-                deviceLogger.error("Device {} is not available. Skipping...", deviceDTO.getName());
+                logger.error("Устройство {} не доступно. Пропуск...", deviceDTO.getName());
+                deviceLogger.error("Устройство {} не доступно. Пропуск...", deviceDTO.getName());
             }
         }
     }
@@ -111,32 +116,28 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private boolean isReadyToPoll(DeviceDTO deviceDTO) {
         Long deviceId = deviceDTO.getId();
         LocalDateTime currentTime = LocalDateTime.now();
-
-        // Сставим метку времени первого опроса, если устройство не найдено в расписании
+        // Ставим метку времени первого опроса, если устройство не найдено в расписании
         LocalDateTime lastPullingTime = schedule.get(deviceId);
+        int pollingPeriod = deviceDTO.getPeriod();
+        deviceLogger.info("Период опроса: {} сек.", pollingPeriod);
 
         // Устройство опрашивается впервые
         if (lastPullingTime == null) {
-//            System.out.println("Device: " + deviceDTO.getName() + " - Is Time For Polling: " + currentTime);
-            deviceLogger.info("Device: {} - Is Time For Polling: {}", deviceDTO.getName(), currentTime);
             schedule.put(deviceId, currentTime);
+            deviceLogger.info("Время первого пороса: {}", currentTime);
 
             return true;
         }
 
-        // Проверка, прошло ли достаточно времени для следующего опроса
-        int pollingPeriod = deviceDTO.getPeriod();
-        boolean isTimeForPolling = Duration.between(lastPullingTime, currentTime).toSeconds() >= pollingPeriod;
-
-        if (isTimeForPolling) {
-//            System.out.println("Device: " + deviceDTO.getName() + " - Last Pulling Time: " + lastPullingTime + " - Current Time: " + currentTime);
-            deviceLogger.info("Device: {} - Last Pulling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
+        long secondsSinceLastPoll = Duration.between(lastPullingTime, currentTime).toSeconds();
+        deviceLogger.info("Прошло: {} сек.", secondsSinceLastPoll);
+        if (secondsSinceLastPoll >= deviceDTO.getPeriod()) {
             schedule.put(deviceId, currentTime);
+//            deviceLogger.info("Device: {} - Last Pulling Time updated to: {}", deviceDTO.getName(), currentTime);
 
             return true;
         } else {
-//            System.out.println("Device: " + deviceDTO.getName() + " - Not Yet Time For Polling. Last Polling Time: " + lastPullingTime + " - Current Time: " + currentTime);
-            deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
+//            deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
 
             return false;
         }
@@ -150,7 +151,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         snmpData.put("lastPollingTime", LocalDateTime.now());
 
 //        logger.info("Starting SNMP poll for device: {} ({})", deviceDTO.getName(), deviceDTO.getIpAddress());
-        deviceLogger.info("Starting SNMP poll for device: {} ({})", deviceDTO.getName(), deviceDTO.getIpAddress());
+//        deviceLogger.info("Starting SNMP poll for device: {} ({})", deviceDTO.getName(), deviceDTO.getIpAddress());
 
         // Загружаем полный объект DeviceTypeDTO с параметрами
         DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
@@ -158,7 +159,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
 //        System.out.println("Parameters to Poll: " + parameterDTOList.size());
 //        logger.info("Parameters to Poll: {}", parameterDTOList.size());
-        deviceLogger.info("Parameters to Poll: {}", parameterDTOList.size());
+        deviceLogger.info("Кол-во параметров: {}", parameterDTOList.size());
 
         // Используем try-with-resources для правильного закрытия ресурса Snmp
         try (Snmp snmp = new Snmp(new DefaultUdpTransportMapping())) {
@@ -170,22 +171,19 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                             pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp);
                         } catch (Exception e) {
                             e.printStackTrace();
-                            logger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
-                            deviceLogger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+                            logger.error("Ошибка опроса параметра {} у {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+                            deviceLogger.error("Ошибка опроса параметра: {} ", parameterDTO.getName(), e);
                         }
                     }))
                     .toList();
 
             CompletableFuture<Void> allOf = CompletableFuture.allOf(futureParameterList.toArray(new CompletableFuture[0]));
-            // Ожидание завершения всех SNMP-запросов
-//            logger.info("Waiting for all polling tasks to complete...");
-            allOf.get();
-//            logger.info("All polling tasks completed.");
 
+            allOf.get();
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
-            logger.error("Error during SNMP polling for device {}: ", deviceDTO.getName(), e);
-            deviceLogger.error("Error during SNMP polling for device {}: ", deviceDTO.getName(), e);
+            logger.error("Ошибка во время опроса {}: ", deviceDTO.getName(), e);
+            deviceLogger.error("Ошибка во время опроса: ", e);
             Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
         }
 
@@ -222,15 +220,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                 checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
             }
 
-            deviceLogger.info("Parameter ({}): {}", parameterDTO.getName(), processedValue);
+            deviceLogger.info("{}: {}", parameterDTO.getDescription(), processedValue);
 
-            // Потокобезопасная запись данных
-            synchronized (snmpData) {
-                snmpData.put(parameterDTO.getName(), processedValue);
-            }
-
+            snmpData.put(parameterDTO.getName(), processedValue);
         } catch (Exception e) {
-            logger.error("Error polling parameter {} for device {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+            logger.error("Ошибка опроса параметра {} у {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+            deviceLogger.error("Ошибка опроса параметра: {}", parameterDTO.getName(), e);
         } finally {
             MDC.clear();  // Очищаем MDC после завершения
         }
@@ -250,14 +245,14 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
             return Optional.ofNullable(statusMap.get(intValue))
                     .orElseGet(() -> {
-                        logger.error("Enum value not found for key: {} in parameter: {}", intValue, parameterDTO.getName());
+                        logger.error("Не найдено значение ключа {} для: {}", intValue, parameterDTO.getName());
 
-                        return "Unknown status";
+                        return "Неизвестный ключ";
                     });
         } else {
-            logger.error("Cast value is not an integer: {}", castValue);
+            logger.error("Значение не является целым числом: {}", castValue);
 
-            return "Invalid status";
+            return "Недопустимый ключ";
         }
     }
 
@@ -268,9 +263,9 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             case DOUBLE -> castValue = (((double) castValue + additive) * coefficient);
             case LONG -> castValue = (long) (((long) castValue + additive) * coefficient);
             default -> {
-                logger.error("Unsupported data type: {}", dataType);
-                deviceLogger.error("Unsupported data type: {}", dataType);
-                throw new IllegalArgumentException("Unsupported data type: " + dataType);
+                logger.error("Неподдерживаемый тип данных: {}", dataType);
+                deviceLogger.error("Неподдерживаемый тип данных: {}", dataType);
+                throw new IllegalArgumentException("Неподдерживаемый тип данных: " + dataType);
             }
         }
 

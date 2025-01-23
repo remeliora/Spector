@@ -26,7 +26,7 @@ public class SnmpPollingService {   //Сервис для взаимодейст
         for (DBChecker dbChecker : dbCheckers) {
             if (!dbChecker.isAccessible(3)) {
 //                System.out.println("Одна из баз данных недоступна, завершение опроса.");
-                logger.error("Одна из баз данных недоступна, завершение опроса.");
+                logger.error("Проблема с доступом к БД, завершение опроса.");
                 return;
             }
         }
