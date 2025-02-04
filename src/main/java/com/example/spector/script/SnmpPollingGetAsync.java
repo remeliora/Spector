@@ -84,8 +84,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 //        } catch (InterruptedException e) {
 //            Thread.currentThread().interrupt();
 //            logger.error("Polling interrupted for device {}: ", deviceDTO.getName(), e);
-        } catch (IOException e) {
-            logger.error("IOException во время опроса {}: ", deviceDTO.getName(), e);
+        } catch (IOException | TimeoutException e) {
+            logger.error("IOException | TimeoutException во время опроса {}: ", deviceDTO.getName(), e);
         } finally {
             long endTime = System.currentTimeMillis();
             deviceLogger.info("Опрос {} занял {} мс.", deviceDTO.getName(), endTime - startTime);
@@ -98,10 +98,10 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
     // Механизм ретраев
     @Retryable(
-            value = { IOException.class },
+            value = { IOException.class, TimeoutException.class },
 //            maxAttempts = 3,
             backoff = @Backoff(delay = 1000, multiplier = 2))  // Ретрай с задержкой 3 секунды
-    public void retryPollDevice(DeviceDTO deviceDTO) throws IOException {
+    public void retryPollDevice(DeviceDTO deviceDTO) throws IOException, TimeoutException {
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
                 Map<String, Object> snmpData = snmpPoll(deviceDTO);
@@ -202,10 +202,16 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
 //        System.out.println("Parameter Address: " + parameterDTO.getAddress());
 //        deviceLogger.info("Parameter Address: {}", parameterDTO.getAddress());
+            if (result == null || result.getVariable() == null) {
+                logger.warn("Пустое значение параметра {} у устройства {}", parameterDTO.getName(), deviceDTO.getName());
+                return CompletableFuture.completedFuture(null);
+            }
 
             Variable variable = result.getVariable();
+
             List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
             DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+
             TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
             Object castValue = castTo(dataType, variable, typeCaster);
             ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
@@ -273,6 +279,10 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     }
 
     private <T> T castTo(DataType dataType, Variable variable, TypeCaster<T> typeCaster) {
+        if (variable == null) {
+            logger.warn("Значение null, невозможно преобразовать в {}", dataType);
+            return null;
+        }
         return typeCaster.cast(variable);
     }
 }

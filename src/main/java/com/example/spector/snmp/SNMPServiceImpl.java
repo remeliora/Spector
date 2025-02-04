@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
 
 @Component
 @RequiredArgsConstructor
-public class SNMPServiceImpl implements SNMPService{
+public class SNMPServiceImpl implements SNMPService {
     private static final Logger logger = LoggerFactory.getLogger(SNMPServiceImpl.class);
 
     @Override
@@ -74,10 +74,16 @@ public class SNMPServiceImpl implements SNMPService{
             };
 
             snmp.send(pdu, target, null, listener);
-            result = futureResult.get(5, TimeUnit.SECONDS);
+            result = futureResult.get(10, TimeUnit.SECONDS);
 
-        } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
+            logger.error("Error during SNMP request to device {}: {}", deviceIp, e.getMessage());
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+            logger.error("Timeout during SNMP request to device {}: {}", deviceIp, e.getMessage());
+
+            return null; // Возвращаем null в случае таймаута
         }
 
         return result;
@@ -89,7 +95,7 @@ public class SNMPServiceImpl implements SNMPService{
         target.setAddress(new UdpAddress(ipAddress + "/161"));
         target.setVersion(SnmpConstants.version1);
         target.setRetries(3);
-        target.setTimeout(5000);
+        target.setTimeout(10000);
         return target;
     }
 }

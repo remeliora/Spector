@@ -79,6 +79,11 @@
         <appender-ref ref="SNMP_POLLING_FILE"/>
     </logger>
 
+    <!--  Логгер для SNMPServiceImpl  -->
+    <logger name="com.example.spector.snmp.SNMPServiceImpl" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
     <!--  Логгер для MongoDB  -->
     <logger name="com.example.spector.database.mongodb" level="INFO" additivity="false">
         <appender-ref ref="SNMP_POLLING_FILE"/>

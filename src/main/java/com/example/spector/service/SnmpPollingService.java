@@ -16,12 +16,16 @@ import java.util.List;
 public class SnmpPollingService {   //Сервис для взаимодействия со скриптом опроса
     private final SnmpPollingGetAsync snmpPollingGetAsync;
     private final List<DBChecker> dbCheckers; // Внедряются все реализации DBChecker
+    private final AppSettingService appSettingService;
     private static final Logger logger = LoggerFactory.getLogger(SnmpPollingService.class);
 
     @Async
-    @Scheduled(fixedDelay = 15000)
+    @Scheduled(fixedRateString = "#{@appSettingService.getPollPeriod() * 1000}")
     public void executePolling() {
-
+        if (!appSettingService.isPollingActive()) {
+            logger.info("Опрос отключен в настройках.");
+            return;
+        }
         // Проверка подключения к базам данных
         for (DBChecker dbChecker : dbCheckers) {
             if (!dbChecker.isAccessible(3)) {
