@@ -1,6 +1,10 @@
 package com.example.spector.database.dao;
 
 import com.example.spector.domain.dto.DeviceDTO;
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
+import com.example.spector.event.EventDispatcher;
+import com.example.spector.event.EventMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -22,6 +26,7 @@ import java.util.Map;
 @Qualifier("jsonDAO")
 @RequiredArgsConstructor
 public class JsonDAO implements DAO {
+    private final EventDispatcher eventDispatcher;
     private static final Logger logger = LoggerFactory.getLogger(JsonDAO.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
@@ -35,7 +40,9 @@ public class JsonDAO implements DAO {
             Files.createDirectories(dirPath);
         } catch (IOException e) {
 //            e.printStackTrace();
-            logger.error("Failed to create directories for JSON files", e);
+//            logger.error("Ошибка при создании директории для JSON-файлов", e);
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Ошибка при создании директории для JSON-файлов: " + e));
 
             return;
         }
@@ -48,11 +55,15 @@ public class JsonDAO implements DAO {
             if (deviceFileName.createNewFile()) {
 //                System.out.println("File created: " + deviceFileName);
 //                logger.info("File created: {}", deviceFileName);
-                deviceLogger.info("File created: {}", deviceFileName);
+//                deviceLogger.info("File created: {}", deviceFileName);
+                eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+                        "Файл создан: " + deviceFileName));
             }
         } catch (IOException e) {
 //            e.printStackTrace();
-            logger.error("Failed to create or check JSON file: {}", filePath, e);
+//            logger.error("Failed to create or check JSON file: {}", filePath, e);
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Ошибка при создании/проверке JSON-файла: " + e));
         }
     }
 
@@ -63,7 +74,10 @@ public class JsonDAO implements DAO {
         File deviceFileName = filePath.toFile();
 
         if (snmpData == null && snmpData.isEmpty()) {
-            logger.error("SNMP data is null or empty for device: {}", deviceDTO.getName());
+//            logger.error("SNMP data is null or empty for device: {}", deviceDTO.getName());
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Ошибка: данные SNMP отсутствуют для: " + deviceDTO.getName()));
+
             return;
         }
         try {
@@ -79,7 +93,9 @@ public class JsonDAO implements DAO {
         } catch (IOException e) {
 //            e.printStackTrace();
 //            System.out.println("Error writing SNMP data to file: " + e.getMessage());
-            logger.error("Error writing SNMP data to file: {}", e.getMessage());
+//            logger.error("Error writing SNMP data to file: {}", e.getMessage());
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Ошибка при записи данных SNMP в файл: " + e.getMessage()));
         }
     }
 }

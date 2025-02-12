@@ -90,6 +90,11 @@
         <appender-ref ref="DEVICE_FILE"/>
     </logger>
 
+    <!--  Логгер для Event  -->
+    <logger name="com.example.spector.event.channels" level="INFO" additivity="false">
+        <appender-ref ref="SNMP_POLLING_FILE"/>
+    </logger>
+
     <!--  Логгер для сервиса скрипта-опроса  -->
     <logger name="com.example.spector.service.SnmpPollingService" level="INFO" additivity="false">
         <appender-ref ref="SNMP_POLLING_FILE"/>

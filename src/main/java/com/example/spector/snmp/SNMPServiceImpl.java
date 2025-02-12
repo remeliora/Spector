@@ -1,5 +1,9 @@
 package com.example.spector.snmp;
 
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
+import com.example.spector.event.EventDispatcher;
+import com.example.spector.event.EventMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 @Component
 @RequiredArgsConstructor
 public class SNMPServiceImpl implements SNMPService {
+    private final EventDispatcher eventDispatcher;
     private static final Logger logger = LoggerFactory.getLogger(SNMPServiceImpl.class);
 
     @Override
@@ -78,10 +83,14 @@ public class SNMPServiceImpl implements SNMPService {
 
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
-            logger.error("Error during SNMP request to device {}: {}", deviceIp, e.getMessage());
+//            logger.error("Error during SNMP request to device {}: {}", deviceIp, e.getMessage());
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Error during SNMP request to device " + deviceIp + ": " + e.getMessage()));
         } catch (TimeoutException e) {
             e.printStackTrace();
-            logger.error("Timeout during SNMP request to device {}: {}", deviceIp, e.getMessage());
+//            logger.error("Timeout during SNMP request to device {}: {}", deviceIp, e.getMessage());
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Timeout during SNMP request to device " + deviceIp + ": " + e.getMessage()));
 
             return null; // Возвращаем null в случае таймаута
         }
