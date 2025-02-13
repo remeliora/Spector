@@ -33,7 +33,7 @@ public class JsonDAO implements DAO {
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
-        MDC.put("deviceName", deviceDTO.getName());
+//        MDC.put("deviceName", deviceDTO.getName());
 
         Path dirPath = Paths.get("logs/JsonFiles");
         try {
