@@ -1,16 +1,24 @@
 package com.example.spector.converter;
 
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
+import com.example.spector.event.EventDispatcher;
+import com.example.spector.event.EventMessage;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snmp4j.smi.*;
 
+@RequiredArgsConstructor
 public class IntegerTypeCaster implements TypeCaster<Integer> {
-    private static final Logger logger = LoggerFactory.getLogger(IntegerTypeCaster.class);
+    private final EventDispatcher eventDispatcher;
 
     @Override
     public Integer cast(Variable variable) {
         if (variable == null) {
-            logger.error("Variable is empty");
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Пустое значение!"));
+
             return null;
         }
 
@@ -25,8 +33,8 @@ public class IntegerTypeCaster implements TypeCaster<Integer> {
         } else if (variable instanceof UnsignedInteger32) {
             return (int) variable.toLong();
         } else {
-            logger.error("Unsupported Variable type for integer casting: {} with value: {}",
-                    variable.getClass().getSimpleName(), variable);
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Невозможно конвертировать в INTEGER: " + variable.getClass().getSimpleName() + " = " + variable));
             throw new IllegalArgumentException("Unsupported Variable type for integer casting: " + variable.getClass().getSimpleName());
         }
     }

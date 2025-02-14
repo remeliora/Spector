@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 @RequiredArgsConstructor
 public class SNMPServiceImpl implements SNMPService {
     private final EventDispatcher eventDispatcher;
-    private static final Logger logger = LoggerFactory.getLogger(SNMPServiceImpl.class);
+//    private static final Logger logger = LoggerFactory.getLogger(SNMPServiceImpl.class);
 
     @Override
     public boolean isAvailableBySNMP(String ipAddress) {
@@ -85,12 +85,12 @@ public class SNMPServiceImpl implements SNMPService {
             e.printStackTrace();
 //            logger.error("Error during SNMP request to device {}: {}", deviceIp, e.getMessage());
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Error during SNMP request to device " + deviceIp + ": " + e.getMessage()));
+                    "Ошибка во время опроса оборудования " + deviceIp + ": " + e.getMessage()));
         } catch (TimeoutException e) {
             e.printStackTrace();
 //            logger.error("Timeout during SNMP request to device {}: {}", deviceIp, e.getMessage());
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Timeout during SNMP request to device " + deviceIp + ": " + e.getMessage()));
+                    "Таймаут у оборудования " + deviceIp + " превышен: "));
 
             return null; // Возвращаем null в случае таймаута
         }

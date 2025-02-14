@@ -3,8 +3,6 @@ package com.example.spector.script;
 import com.example.spector.checker.device.DeviceConnectionChecker;
 import com.example.spector.checker.threshold.ThresholdChecker;
 import com.example.spector.checker.threshold.ThresholdCheckerFactory;
-import com.example.spector.converter.TypeCaster;
-import com.example.spector.converter.TypeCasterFactory;
 import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.database.postgres.DataBaseService;
@@ -20,8 +18,6 @@ import com.example.spector.event.EventMessage;
 import com.example.spector.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
@@ -51,6 +47,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private final DeviceConnectionChecker deviceConnectionChecker;
     private final SNMPService snmpService;
     private final EventDispatcher eventDispatcher;
+    private final SnmpVariableConverter snmpVariableConverter;
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
 //    private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
 //    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
@@ -145,7 +142,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
             return true;
         } else {
-//            deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}", deviceDTO.getName(), lastPullingTime, currentTime);
+//            deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}",
+//            deviceDTO.getName(), lastPullingTime, currentTime);
 
             return false;
         }
@@ -181,13 +179,16 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                             pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp);
                         } catch (Exception e) {
                             e.printStackTrace();
-//                            logger.error("Ошибка опроса параметра {} у {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
+//                            logger.error("Ошибка опроса параметра {} у {}: ",
+//                            parameterDTO.getName(), deviceDTO.getName(), e);
                             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
+                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
+                                            deviceDTO.getName() + ": " + e));
 
 //                            deviceLogger.error("Ошибка опроса параметра: {} ", parameterDTO.getName(), e);
                             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
+                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
+                                            deviceDTO.getName() + ": " + e));
                         }
                     }))
                     .toList();
@@ -211,7 +212,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Map<String, Object> snmpData, Snmp snmp) {
+    public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
+                                                      Map<String, Object> snmpData, Snmp snmp) {
         MDC.put("deviceName", deviceDTO.getName());
         try {
             OID oid = new OID(parameterDTO.getAddress());
@@ -233,10 +235,11 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Variable variable = result.getVariable();
 
             List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
-            DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+//            DataType dataType = DataType.valueOf(parameterDTO.getDataType());
 
-            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
-            Object castValue = castTo(dataType, variable, typeCaster);
+//            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
+//            Object castValue = castTo(dataType, variable, typeCaster);
+            Object castValue = snmpVariableConverter.convert(parameterDTO, variable);
             ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
 
             Object processedValue;
@@ -251,7 +254,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
 //            deviceLogger.info("{}: {}", parameterDTO.getDescription(), processedValue);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    parameterDTO.getDescription() + ": " + processedValue));
+                    "Параметр (" + parameterDTO.getDescription() + "): " + processedValue));
 
             snmpData.put(parameterDTO.getName(), processedValue);
         } catch (Exception e) {
@@ -313,15 +316,5 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         }
 
         return castValue;
-    }
-
-    private <T> T castTo(DataType dataType, Variable variable, TypeCaster<T> typeCaster) {
-        if (variable == null) {
-//            logger.warn("Значение null, невозможно преобразовать в {}", dataType);
-            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Значение null, невозможно преобразовать в " + dataType));
-            return null;
-        }
-        return typeCaster.cast(variable);
     }
 }
