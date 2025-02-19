@@ -1,8 +1,7 @@
 package com.example.spector.script;
 
 import com.example.spector.checker.device.DeviceConnectionChecker;
-import com.example.spector.checker.threshold.ThresholdChecker;
-import com.example.spector.checker.threshold.ThresholdCheckerFactory;
+import com.example.spector.converter.VariableCaster;
 import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.database.postgres.DataBaseService;
@@ -10,11 +9,12 @@ import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.DeviceTypeDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
-import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.event.EventDispatcher;
 import com.example.spector.event.EventMessage;
+import com.example.spector.handler.ParameterHandler;
+import com.example.spector.handler.ParameterHandlerFactory;
 import com.example.spector.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.*;
 
 @Component
@@ -43,12 +42,13 @@ import java.util.concurrent.*;
 public class SnmpPollingGetAsync {   // Класс скрипта опроса по протоколу SNMP
     private final DataBaseService dataBaseService;
     private final DAOService daoService;
-    private final EnumeratedStatusService enumeratedStatusService;
+//    private final EnumeratedStatusService enumeratedStatusService;
     private final DeviceConnectionChecker deviceConnectionChecker;
     private final SNMPService snmpService;
     private final EventDispatcher eventDispatcher;
-    private final SnmpVariableConverter snmpVariableConverter;
+    private final VariableCaster variableCaster;
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
+    private final ParameterHandlerFactory parameterHandlerFactory;
 //    private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
 //    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
@@ -239,22 +239,26 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
 //            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
 //            Object castValue = castTo(dataType, variable, typeCaster);
-            Object castValue = snmpVariableConverter.convert(parameterDTO, variable);
-            ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
+            Object castValue = variableCaster.convert(parameterDTO, variable);
 
-            Object processedValue;
-            if (parameterDTO.getIsEnumeratedStatus()) {
-                Integer intValue = (Integer) castValue;
-                checker.checkThresholds(intValue, thresholdDTOList, deviceDTO);
-                processedValue = processEnumeratedStatus(parameterDTO, castValue);
-            } else {
-                processedValue = processRegularParameter(parameterDTO, castValue);
-                checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
-            }
+            ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
+            Object processedValue = parameterHandler.handleParameter(deviceDTO, parameterDTO, castValue, thresholdDTOList);
+
+//            ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
+//
+//            Object processedValue;
+//            if (parameterDTO.getIsEnumeratedStatus()) {
+//                Integer intValue = (Integer) castValue;
+//                checker.checkThresholds(intValue, thresholdDTOList, deviceDTO);
+//                processedValue = processEnumeratedStatus(parameterDTO, castValue);
+//            } else {
+//                processedValue = processRegularParameter(parameterDTO, castValue);
+//                checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
+//            }
 
 //            deviceLogger.info("{}: {}", parameterDTO.getDescription(), processedValue);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "Параметр (" + parameterDTO.getDescription() + "): " + processedValue));
+                    "Параметр - " + parameterDTO.getDescription() + ": " + processedValue));
 
             snmpData.put(parameterDTO.getName(), processedValue);
         } catch (Exception e) {
@@ -271,50 +275,50 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         return CompletableFuture.completedFuture(null);
     }
 
-    private Object processRegularParameter(ParameterDTO parameterDTO, Object castValue) {
-        return applyModifications(DataType.valueOf(parameterDTO.getDataType()), castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
-    }
-
-    private Object processEnumeratedStatus(ParameterDTO parameterDTO, Object castValue) {
-        if (castValue instanceof Integer intValue) {
-
-            // Получаем карту статусов для параметра
-            Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
-
-            return Optional.ofNullable(statusMap.get(intValue))
-                    .orElseGet(() -> {
-//                        logger.error("Не найдено значение ключа {} для: {}", intValue, parameterDTO.getName());
-                        eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                                "Не найдено значение ключа " + intValue + " для: " + parameterDTO.getName()));
-
-                        return "Неизвестный ключ";
-                    });
-        } else {
-//            logger.error("Значение не является целым числом: {}", castValue);
-            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Значение не является целым числом: " + castValue));
-
-            return "Недопустимый ключ";
-        }
-    }
-
-    private Object applyModifications(DataType dataType, Object castValue,
-                                      Double additive, Double coefficient) {
-        switch (dataType) {
-            case INTEGER -> castValue = (int) (((int) castValue + additive) * coefficient);
-            case DOUBLE -> castValue = (((double) castValue + additive) * coefficient);
-            case LONG -> castValue = (long) (((long) castValue + additive) * coefficient);
-            default -> {
-//                logger.error("Неподдерживаемый тип данных: {}", dataType);
-                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Неподдерживаемый тип данных: " + dataType));
-//                deviceLogger.error("Неподдерживаемый тип данных: {}", dataType);
-                eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                        "Неподдерживаемый тип данных: " + dataType));
-                throw new IllegalArgumentException("Неподдерживаемый тип данных: " + dataType);
-            }
-        }
-
-        return castValue;
-    }
+//    private Object processRegularParameter(ParameterDTO parameterDTO, Object castValue) {
+//        return applyModifications(DataType.valueOf(parameterDTO.getDataType()), castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+//    }
+//
+//    private Object processEnumeratedStatus(ParameterDTO parameterDTO, Object castValue) {
+//        if (castValue instanceof Integer intValue) {
+//
+//            // Получаем карту статусов для параметра
+//            Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
+//
+//            return Optional.ofNullable(statusMap.get(intValue))
+//                    .orElseGet(() -> {
+////                        logger.error("Не найдено значение ключа {} для: {}", intValue, parameterDTO.getName());
+//                        eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+//                                "Не найдено значение ключа " + intValue + " для: " + parameterDTO.getName()));
+//
+//                        return "Неизвестный ключ";
+//                    });
+//        } else {
+////            logger.error("Значение не является целым числом: {}", castValue);
+//            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+//                    "Значение не является целым числом: " + castValue));
+//
+//            return "Недопустимый ключ";
+//        }
+//    }
+//
+//    private Object applyModifications(DataType dataType, Object castValue,
+//                                      Double additive, Double coefficient) {
+//        switch (dataType) {
+//            case INTEGER -> castValue = (int) (((int) castValue + additive) * coefficient);
+//            case DOUBLE -> castValue = (((double) castValue + additive) * coefficient);
+//            case LONG -> castValue = (long) (((long) castValue + additive) * coefficient);
+//            default -> {
+////                logger.error("Неподдерживаемый тип данных: {}", dataType);
+//                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+//                        "Неподдерживаемый тип данных: " + dataType));
+////                deviceLogger.error("Неподдерживаемый тип данных: {}", dataType);
+//                eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
+//                        "Неподдерживаемый тип данных: " + dataType));
+//                throw new IllegalArgumentException("Неподдерживаемый тип данных: " + dataType);
+//            }
+//        }
+//
+//        return castValue;
+//    }
 }

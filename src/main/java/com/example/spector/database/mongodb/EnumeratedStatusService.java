@@ -30,10 +30,10 @@ public class EnumeratedStatusService {
         if (!enumeratedStatusMongoTemplate.collectionExists(parameterName)) {
 //            logger.error("No Collection found for parameter: {}", parameterName);
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Коллекции перечисляемого параметра (" + parameterName + ") не найдена"));
+                    "Коллекции статусного параметра (" + parameterName + ") не найдена"));
 //            deviceLogger.error("No Collection found for parameter: {}", parameterName);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                    "Коллекции перечисляемого параметра (" + parameterName + ") не найдена"));
+                    "Коллекции статусного параметра (" + parameterName + ") не найдена"));
             throw new IllegalArgumentException("No Collection found for parameter: " + parameterName);
         }
         // Находим коллекцию по имени параметра

@@ -1,7 +1,5 @@
-package com.example.spector.script;
+package com.example.spector.converter;
 
-import com.example.spector.converter.TypeCaster;
-import com.example.spector.converter.TypeCasterFactory;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
@@ -14,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SnmpVariableConverter {
+public class VariableCaster {
     private final TypeCasterFactory typeCasterFactory;
     private final EventDispatcher eventDispatcher;
 
