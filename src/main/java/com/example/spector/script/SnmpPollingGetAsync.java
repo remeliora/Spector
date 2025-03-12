@@ -1,9 +1,8 @@
 package com.example.spector.script;
 
-import com.example.spector.checker.device.DeviceConnectionChecker;
-import com.example.spector.converter.VariableCaster;
+import com.example.spector.modules.checker.device.DeviceConnectionChecker;
+import com.example.spector.modules.converter.VariableCaster;
 import com.example.spector.database.dao.DAOService;
-import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.database.postgres.DataBaseService;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.DeviceTypeDTO;
@@ -11,11 +10,11 @@ import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
-import com.example.spector.event.EventDispatcher;
-import com.example.spector.event.EventMessage;
-import com.example.spector.handler.ParameterHandler;
-import com.example.spector.handler.ParameterHandlerFactory;
-import com.example.spector.snmp.SNMPService;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
+import com.example.spector.modules.handler.ParameterHandler;
+import com.example.spector.modules.handler.ParameterHandlerFactory;
+import com.example.spector.modules.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
@@ -49,9 +48,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private final VariableCaster variableCaster;
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
     private final ParameterHandlerFactory parameterHandlerFactory;
-//    private static final Logger logger = LoggerFactory.getLogger(SnmpPollingGetAsync.class);
-//    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
-
 
     @Transactional
     public void pollDevices() {
@@ -100,11 +96,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                 Map<String, Object> snmpData = snmpPoll(deviceDTO);
                 daoService.writeData(deviceDTO, snmpData);
             } else {
-//                logger.error("Устройство {} не доступно. Пропуск...", deviceDTO.getName());
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                         "Устройство " + deviceDTO.getName() + " не доступно. Пропуск..."));
-
-//                deviceLogger.error("Устройство {} не доступно. Пропуск...", deviceDTO.getName());
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                         "Устройство " + deviceDTO.getName() + " не доступно. Пропуск..."));
             }
@@ -117,14 +110,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         // Ставим метку времени первого опроса, если устройство не найдено в расписании
         LocalDateTime lastPullingTime = schedule.get(deviceId);
         int pollingPeriod = deviceDTO.getPeriod();
-//        deviceLogger.info("Период опроса: {} сек.", pollingPeriod);
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                 "Период опроса: " + pollingPeriod + " сек."));
 
         // Устройство опрашивается впервые
         if (lastPullingTime == null) {
             schedule.put(deviceId, currentTime);
-//            deviceLogger.info("Время первого пороса: {}", currentTime);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                     "Время первого пороса: " + currentTime));
 
@@ -132,19 +123,14 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         }
 
         long secondsSinceLastPoll = Duration.between(lastPullingTime, currentTime).toSeconds();
-//        deviceLogger.info("Прошло: {} сек.", secondsSinceLastPoll);
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                 "Прошло: " + secondsSinceLastPoll + " сек."));
 
         if (secondsSinceLastPoll >= deviceDTO.getPeriod()) {
             schedule.put(deviceId, currentTime);
-//            deviceLogger.info("Device: {} - Last Pulling Time updated to: {}", deviceDTO.getName(), currentTime);
 
             return true;
         } else {
-//            deviceLogger.info("Device: {} - Not Yet Time For Polling. Last Polling Time: {} - Current Time: {}",
-//            deviceDTO.getName(), lastPullingTime, currentTime);
-
             return false;
         }
     }
@@ -156,16 +142,9 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         snmpData.put("deviceIp", deviceDTO.getIpAddress());
         snmpData.put("lastPollingTime", LocalDateTime.now());
 
-//        logger.info("Starting SNMP poll for device: {} ({})", deviceDTO.getName(), deviceDTO.getIpAddress());
-//        deviceLogger.info("Starting SNMP poll for device: {} ({})", deviceDTO.getName(), deviceDTO.getIpAddress());
-
         // Загружаем полный объект DeviceTypeDTO с параметрами
         DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
         List<ParameterDTO> parameterDTOList = deviceTypeDTO.getParameter();
-
-//        System.out.println("Parameters to Poll: " + parameterDTOList.size());
-//        logger.info("Parameters to Poll: {}", parameterDTOList.size());
-//        deviceLogger.info("Кол-во параметров: {}", parameterDTOList.size());
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                 "Кол-во параметров: " + parameterDTOList.size()));
 
@@ -179,13 +158,9 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                             pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp);
                         } catch (Exception e) {
                             e.printStackTrace();
-//                            logger.error("Ошибка опроса параметра {} у {}: ",
-//                            parameterDTO.getName(), deviceDTO.getName(), e);
                             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                                     "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
                                             deviceDTO.getName() + ": " + e));
-
-//                            deviceLogger.error("Ошибка опроса параметра: {} ", parameterDTO.getName(), e);
                             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                                     "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
                                             deviceDTO.getName() + ": " + e));
@@ -198,11 +173,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             allOf.get();
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
-//            logger.error("Ошибка во время опроса {}: ", deviceDTO.getName(), e);
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Ошибка во время опроса " + deviceDTO.getName() + ": " + e));
-
-//            deviceLogger.error("Ошибка во время опроса: ", e);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                     "Ошибка во время опроса: " + e));
             Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
@@ -222,10 +194,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             pdu.setType(PDU.GET);
 
             VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
-//        System.out.println("Parameter Address: " + parameterDTO.getAddress());
-//        deviceLogger.info("Parameter Address: {}", parameterDTO.getAddress());
             if (result == null || result.getVariable() == null) {
-//                logger.warn("Пустое значение параметра {} у устройства {}", parameterDTO.getName(), deviceDTO.getName());
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                         "Пустое значение параметра " + parameterDTO.getName() + " у " + deviceDTO.getName()));
 
@@ -235,10 +204,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Variable variable = result.getVariable();
 
             List<ThresholdDTO> thresholdDTOList = dataBaseService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
-//            DataType dataType = DataType.valueOf(parameterDTO.getDataType());
-
-//            TypeCaster<?> typeCaster = TypeCasterFactory.getTypeCaster(dataType);
-//            Object castValue = castTo(dataType, variable, typeCaster);
             Object castValue = variableCaster.convert(parameterDTO, variable);
 
             ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
@@ -255,17 +220,13 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 //                processedValue = processRegularParameter(parameterDTO, castValue);
 //                checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
 //            }
-
-//            deviceLogger.info("{}: {}", parameterDTO.getDescription(), processedValue);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                     "Параметр - " + parameterDTO.getDescription() + ": " + processedValue));
 
             snmpData.put(parameterDTO.getName(), processedValue);
         } catch (Exception e) {
-//            logger.error("Ошибка опроса параметра {} у {}: ", parameterDTO.getName(), deviceDTO.getName(), e);
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
-//            deviceLogger.error("Ошибка опроса параметра: {}", parameterDTO.getName(), e);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                     "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
         } finally {

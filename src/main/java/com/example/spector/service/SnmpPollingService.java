@@ -1,10 +1,10 @@
 package com.example.spector.service;
 
-import com.example.spector.checker.db.DBChecker;
+import com.example.spector.modules.checker.db.DBChecker;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
-import com.example.spector.event.EventDispatcher;
-import com.example.spector.event.EventMessage;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import com.example.spector.script.SnmpPollingGetAsync;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

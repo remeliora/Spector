@@ -1,6 +1,6 @@
 package com.example.spector.config;
 
-import com.example.spector.mdc.MDCTaskDecorator;
+import com.example.spector.modules.mdc.MDCTaskDecorator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;

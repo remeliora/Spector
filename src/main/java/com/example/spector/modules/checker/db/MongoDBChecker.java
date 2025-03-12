@@ -1,0 +1,47 @@
+package com.example.spector.modules.checker.db;
+
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+public class MongoDBChecker implements DBChecker {
+    private final MongoTemplate deviceDataMongoTemplate;
+    private final EventDispatcher eventDispatcher;
+
+    public MongoDBChecker(@Qualifier("databaseDeviceDataMongoTemplate") MongoTemplate deviceDataMongoTemplate, EventDispatcher eventDispatcher) {
+        this.deviceDataMongoTemplate = deviceDataMongoTemplate;
+        this.eventDispatcher = eventDispatcher;
+    }
+
+    @Override
+    public boolean isAccessible(int retryCount) {
+        int attempts = 0;
+
+        while (attempts < retryCount) {
+            try {
+                deviceDataMongoTemplate.executeCommand("{ ping: 1 }");
+//                System.out.println("Соединение с MongoDB успешно установлено.");
+                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
+                        "Соединение с MongoDB успешно установлено."));
+
+                return true;
+            } catch (Exception e) {
+                attempts++;
+//                System.out.println("Попытка " + attempts + " подключения к MongoDB не удалась: " + e.getMessage());
+                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                        "Попытка " + attempts + " подключения к MongoDB не удалась: " + e.getMessage()));
+            }
+        }
+
+//        System.out.println("Ошибка подключения к MongoDB после " + retryCount + " попыток.");
+        eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                "Ошибка подключения к базе данных MongoDB после " + retryCount + " попыток."));
+
+        return false;
+    }
+}

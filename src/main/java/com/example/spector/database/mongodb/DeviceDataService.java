@@ -4,11 +4,9 @@ import com.example.spector.domain.DeviceData;
 import com.example.spector.domain.dto.DeviceDataDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
-import com.example.spector.event.EventDispatcher;
-import com.example.spector.event.EventMessage;
 import com.example.spector.mapper.DeviceDataDTOConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -28,13 +26,10 @@ public class DeviceDataService {
         this.deviceDataDTOConverter = deviceDataDTOConverter;
         this.eventDispatcher = eventDispatcher;
     }
-//    private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
 
     public void createDeviceDataCollection(String deviceName) {
         if (!deviceDataMongoTemplate.collectionExists(deviceName)) {
             deviceDataMongoTemplate.createCollection(deviceName);
-//            System.out.println("Collection created: " + deviceName);
-//            deviceLogger.info("Хранилище {} создано", deviceName);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                     "Хранилище " + deviceName  + " создано"));
         }
@@ -42,8 +37,6 @@ public class DeviceDataService {
 
     public void saveDeviceData(String deviceName, DeviceData deviceData) {
         deviceDataMongoTemplate.save(deviceData, deviceName);
-//        System.out.println("Data written to collection: " + deviceName);
-//        deviceLogger.info("Данные сохранены");
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                 "Данные сохранены"));
     }
