@@ -1,15 +1,13 @@
 package com.example.spector.script;
 
-import com.example.spector.modules.checker.device.DeviceConnectionChecker;
-import com.example.spector.modules.converter.VariableCaster;
 import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.postgres.DataBaseService;
-import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.domain.dto.DeviceTypeDTO;
-import com.example.spector.domain.dto.ParameterDTO;
-import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.*;
+import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.modules.checker.device.DeviceConnectionChecker;
+import com.example.spector.modules.converter.VariableCaster;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import com.example.spector.modules.handler.ParameterHandler;
@@ -41,7 +39,6 @@ import java.util.concurrent.*;
 public class SnmpPollingGetAsync {   // Класс скрипта опроса по протоколу SNMP
     private final DataBaseService dataBaseService;
     private final DAOService daoService;
-//    private final EnumeratedStatusService enumeratedStatusService;
     private final DeviceConnectionChecker deviceConnectionChecker;
     private final SNMPService snmpService;
     private final EventDispatcher eventDispatcher;
@@ -51,35 +48,34 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
     @Transactional
     public void pollDevices() {
+        AppSettingDTO appSettingDTO = dataBaseService.getAppSetting();
         List<DeviceDTO> deviceDTOList = dataBaseService.getDeviceDTOByIsEnableTrue();
-
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
                 "Кол-во устройств: " + deviceDTOList.size()));
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
                 "Ожидание завершения всех задач опроса..."));
-
-        deviceDTOList.forEach(this::pollDeviceAsync);
-
+//        deviceDTOList.forEach(this::pollDeviceAsync);
+        deviceDTOList.forEach(deviceDTO -> pollDeviceAsync(deviceDTO, appSettingDTO));
         // Ожидание завершения всех задач
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
                 "Задачи опроса проведены для всех устройств."));
     }
 
     @Async("taskExecutor")
-    public CompletableFuture<Void> pollDeviceAsync(DeviceDTO deviceDTO) {
+    public CompletableFuture<Void> pollDeviceAsync(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) {
         // Проверка на наличие файла устройства и его создание
         MDC.put("deviceName", deviceDTO.getName());
         long startTime = System.currentTimeMillis();
         daoService.prepareDAO(deviceDTO);
         try {
-            retryPollDevice(deviceDTO); // Добавляем ретраи с задержками
+            retryPollDevice(deviceDTO, appSettingDTO); // Добавляем ретраи с задержками
         } catch (IOException | TimeoutException e) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "IOException | TimeoutException во время опроса" + deviceDTO.getName() + ": " + e));
         } finally {
             long endTime = System.currentTimeMillis();
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "Опрос " + deviceDTO.getName() + " занял " + (endTime - startTime) + " мс."));
+                    "Опрос занял " + (endTime - startTime) + " мс."));
             MDC.clear();
         }
 
@@ -90,16 +86,19 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     @Retryable(
             value = { IOException.class, TimeoutException.class },
             backoff = @Backoff(delay = 1000, multiplier = 2))  // Ретрай с задержкой в секундах
-    public void retryPollDevice(DeviceDTO deviceDTO) throws IOException, TimeoutException {
+    public void retryPollDevice(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) throws IOException, TimeoutException {
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
-                Map<String, Object> snmpData = snmpPoll(deviceDTO);
+                Map<String, Object> snmpData = snmpPoll(deviceDTO, appSettingDTO);
                 daoService.writeData(deviceDTO, snmpData);
             } else {
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Устройство " + deviceDTO.getName() + " не доступно. Пропуск..."));
+                        deviceDTO.getName() + ": отсутствует соединение с устройством!"));
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                        "Устройство " + deviceDTO.getName() + " не доступно. Пропуск..."));
+                        "Устройство не доступно. Пропуск..."));
+                eventDispatcher.dispatch((EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
+                        appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
+                        deviceDTO.getName() + ": отсутствует соединение с устройством!")));
             }
         }
     }
@@ -135,13 +134,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         }
     }
 
-    private Map<String, Object> snmpPoll(DeviceDTO deviceDTO) {
+    private Map<String, Object> snmpPoll(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) {
         ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
         snmpData.put("deviceId", deviceDTO.getId());
         snmpData.put("deviceName", deviceDTO.getName());
         snmpData.put("deviceIp", deviceDTO.getIpAddress());
         snmpData.put("lastPollingTime", LocalDateTime.now());
-
         // Загружаем полный объект DeviceTypeDTO с параметрами
         DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
         List<ParameterDTO> parameterDTOList = deviceTypeDTO.getParameter();
@@ -155,26 +153,26 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             List<CompletableFuture<Void>> futureParameterList = parameterDTOList.stream()
                     .map(parameterDTO -> CompletableFuture.runAsync(() -> {
                         try {
-                            pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp);
+                            pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp, appSettingDTO);
                         } catch (Exception e) {
                             e.printStackTrace();
                             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
-                                            deviceDTO.getName() + ": " + e));
+                                    deviceDTO.getName() + ": " + parameterDTO.getName() +
+                                    " - ошибка опроса: " + e));
                             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " +
-                                            deviceDTO.getName() + ": " + e));
+                                    parameterDTO.getName() +  " - ошибка опроса: " + e));
                         }
                     }))
                     .toList();
 
-            CompletableFuture<Void> allOf = CompletableFuture.allOf(futureParameterList.toArray(new CompletableFuture[0]));
+            CompletableFuture<Void> allOf = CompletableFuture
+                    .allOf(futureParameterList.toArray(new CompletableFuture[0]));
 
             allOf.get();
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Ошибка во время опроса " + deviceDTO.getName() + ": " + e));
+                    deviceDTO.getName() + ": ошибка во время опроса - " + e));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                     "Ошибка во время опроса: " + e));
             Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
@@ -185,7 +183,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
     @Async("taskExecutor")
     public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
-                                                      Map<String, Object> snmpData, Snmp snmp) {
+                                                      Map<String, Object> snmpData, Snmp snmp,
+                                                      AppSettingDTO appSettingDTO) {
         MDC.put("deviceName", deviceDTO.getName());
         try {
             OID oid = new OID(parameterDTO.getAddress());
@@ -196,7 +195,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
             if (result == null || result.getVariable() == null) {
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Пустое значение параметра " + parameterDTO.getName() + " у " + deviceDTO.getName()));
+                        deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
+                eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
+                        parameterDTO.getDescription() + ": данные отсутствуют"));
+                eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
+                        appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
+                        deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
 
                 return CompletableFuture.completedFuture(null);
             }
@@ -207,79 +211,24 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Object castValue = variableCaster.convert(parameterDTO, variable);
 
             ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
-            Object processedValue = parameterHandler.handleParameter(deviceDTO, parameterDTO, castValue, thresholdDTOList);
-
-//            ThresholdChecker checker = ThresholdCheckerFactory.getThresholdChecker(parameterDTO);
-//
-//            Object processedValue;
-//            if (parameterDTO.getIsEnumeratedStatus()) {
-//                Integer intValue = (Integer) castValue;
-//                checker.checkThresholds(intValue, thresholdDTOList, deviceDTO);
-//                processedValue = processEnumeratedStatus(parameterDTO, castValue);
-//            } else {
-//                processedValue = processRegularParameter(parameterDTO, castValue);
-//                checker.checkThresholds(processedValue, thresholdDTOList, deviceDTO);
-//            }
+            Object processedValue = parameterHandler.handleParameter(deviceDTO, parameterDTO, castValue,
+                    thresholdDTOList, appSettingDTO);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                     "Параметр - " + parameterDTO.getDescription() + ": " + processedValue));
 
             snmpData.put(parameterDTO.getName(), processedValue);
         } catch (Exception e) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
+                    deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные повреждены: " + e));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                    "Ошибка опроса параметра " + parameterDTO.getName() + " у " + deviceDTO.getName() + ": " + e));
+                    parameterDTO.getName() + " - Данные повреждены: " + e));
+            eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
+                    appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
+                    deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные повреждены"));
         } finally {
             MDC.clear();  // Очищаем MDC после завершения
         }
 
         return CompletableFuture.completedFuture(null);
     }
-
-//    private Object processRegularParameter(ParameterDTO parameterDTO, Object castValue) {
-//        return applyModifications(DataType.valueOf(parameterDTO.getDataType()), castValue, parameterDTO.getAdditive(), parameterDTO.getCoefficient());
-//    }
-//
-//    private Object processEnumeratedStatus(ParameterDTO parameterDTO, Object castValue) {
-//        if (castValue instanceof Integer intValue) {
-//
-//            // Получаем карту статусов для параметра
-//            Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
-//
-//            return Optional.ofNullable(statusMap.get(intValue))
-//                    .orElseGet(() -> {
-////                        logger.error("Не найдено значение ключа {} для: {}", intValue, parameterDTO.getName());
-//                        eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-//                                "Не найдено значение ключа " + intValue + " для: " + parameterDTO.getName()));
-//
-//                        return "Неизвестный ключ";
-//                    });
-//        } else {
-////            logger.error("Значение не является целым числом: {}", castValue);
-//            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-//                    "Значение не является целым числом: " + castValue));
-//
-//            return "Недопустимый ключ";
-//        }
-//    }
-//
-//    private Object applyModifications(DataType dataType, Object castValue,
-//                                      Double additive, Double coefficient) {
-//        switch (dataType) {
-//            case INTEGER -> castValue = (int) (((int) castValue + additive) * coefficient);
-//            case DOUBLE -> castValue = (((double) castValue + additive) * coefficient);
-//            case LONG -> castValue = (long) (((long) castValue + additive) * coefficient);
-//            default -> {
-////                logger.error("Неподдерживаемый тип данных: {}", dataType);
-//                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-//                        "Неподдерживаемый тип данных: " + dataType));
-////                deviceLogger.error("Неподдерживаемый тип данных: {}", dataType);
-//                eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-//                        "Неподдерживаемый тип данных: " + dataType));
-//                throw new IllegalArgumentException("Неподдерживаемый тип данных: " + dataType);
-//            }
-//        }
-//
-//        return castValue;
-//    }
 }

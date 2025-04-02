@@ -1,9 +1,11 @@
 package com.example.spector.modules.handler;
 
 import com.example.spector.database.mongodb.EnumeratedStatusService;
+import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
@@ -21,8 +23,8 @@ public class EnumeratedParameterHandler implements ParameterHandler {
     private final EnumeratedStatusService enumeratedStatusService;
 
     @Override
-    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
-                                  Object value, List<ThresholdDTO> thresholdDTOList) {
+    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
+                                  List<ThresholdDTO> thresholdDTOList, AppSettingDTO appSettingDTO) {
         Integer intValue = (Integer) value;
         Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
         // Преобразуем фактическое значение в статусную строку
@@ -35,11 +37,14 @@ public class EnumeratedParameterHandler implements ParameterHandler {
                 String allowedStatus = statusMap.getOrDefault(matchExact, String.valueOf(matchExact));
                 if (matchExact != intValue) {
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                            "Нарушение порога: " + thresholdDTO.getParameter().getName() +
-                                    " = " + actualStatus  + ". Допустимое значение [" + allowedStatus + "]"));
+                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " + actualStatus
+                            + ". Допустимое значение [" + allowedStatus + "]"));
                     eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                            "Нарушение порога: " + thresholdDTO.getParameter().getName() +
+                            thresholdDTO.getParameter().getName() + ": " +
                                     " = " + actualStatus + ". Допустимое значение [" + allowedStatus + "]"));
+                    eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
+                            appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
+                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " + actualStatus));
                 }
             }
         }

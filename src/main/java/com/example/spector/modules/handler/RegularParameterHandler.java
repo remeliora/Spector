@@ -1,8 +1,10 @@
 package com.example.spector.modules.handler;
 
+import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
@@ -19,8 +21,8 @@ public class RegularParameterHandler implements ParameterHandler {
     private final EventDispatcher eventDispatcher;
 
     @Override
-    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
-                                  Object value, List<ThresholdDTO> thresholds) {
+    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
+                                  List<ThresholdDTO> thresholds, AppSettingDTO appSettingDTO) {
         Object processedValue = applyModifications(DataType.valueOf(parameterDTO.getDataType()), value,
                 parameterDTO.getAdditive(), parameterDTO.getCoefficient());
 
@@ -31,11 +33,15 @@ public class RegularParameterHandler implements ParameterHandler {
 
                 if ((double) processedValue < lowValue || (double) processedValue > highValue) {
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                            "Нарушение порога: " + thresholdDTO.getParameter().getName() +
-                            " = " + processedValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
+                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
+                            processedValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
                     eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                            "Нарушение порога: " + thresholdDTO.getParameter().getName() +
-                                    " = " + processedValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
+                            thresholdDTO.getParameter().getName() + " = " + processedValue +
+                            ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
+                    eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
+                            appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
+                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
+                            processedValue + " [" + lowValue + "; " + highValue + "]"));
                 }
             }
         }

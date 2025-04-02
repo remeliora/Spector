@@ -79,11 +79,12 @@ public class SNMPServiceImpl implements SNMPService {
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Ошибка во время опроса оборудования " + deviceIp + ": " + e.getMessage()));
+                    "SNMP: ошибка во время опроса оборудования " + deviceIp + ": " + e.getMessage()));
         } catch (TimeoutException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            System.out.println("SNMP: таймаут оборудования " + deviceIp + " превышен");
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Таймаут у оборудования " + deviceIp + " превышен: "));
+                    "SNMP: таймаут оборудования " + deviceIp + " превышен"));
 
             return null; // Возвращаем null в случае таймаута
         }

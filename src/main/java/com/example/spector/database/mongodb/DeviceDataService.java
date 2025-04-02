@@ -31,14 +31,14 @@ public class DeviceDataService {
         if (!deviceDataMongoTemplate.collectionExists(deviceName)) {
             deviceDataMongoTemplate.createCollection(deviceName);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "Хранилище " + deviceName  + " создано"));
+                    "MongoDB: хранилище " + deviceName  + " создано"));
         }
     }
 
     public void saveDeviceData(String deviceName, DeviceData deviceData) {
         deviceDataMongoTemplate.save(deviceData, deviceName);
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "Данные сохранены"));
+                "MongoDB: результаты сохранены"));
     }
 
     public List<DeviceDataDTO> getParametersByDeviceName(String deviceName) {

@@ -23,20 +23,20 @@ public class PostgresChecker implements DBChecker {
                 jdbcTemplate.queryForObject("SELECT 1", Integer.class);
 //                System.out.println("Соединение с Postgres базой данных успешно установлено.");
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
-                        "Соединение с Postgres успешно установлено."));
+                        "Postgres: соединение успешно установлено."));
 
                 return true;
             } catch (Exception e) {
                 attempts++;
 //                System.out.println("Попытка " + attempts + " подключения к Postgres базе данных не удалась: " + e.getMessage());
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Попытка " + attempts + " подключения к Postgres не удалась: " + e.getMessage()));
+                        "Postgres: " + attempts + "-я попытка подключения не удалась: " + e.getMessage()));
             }
         }
 
 //        System.out.println("Ошибка подключения к Postgres базе данных после " + retryCount + " попыток.");
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                "Ошибка подключения к базе данных Postgres после " + retryCount + " попыток."));
+                "Postgres: не удалось подключиться к БД после " + retryCount + " попыток."));
         return false;
     }
 }

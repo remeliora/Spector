@@ -27,20 +27,20 @@ public class MongoDBChecker implements DBChecker {
                 deviceDataMongoTemplate.executeCommand("{ ping: 1 }");
 //                System.out.println("Соединение с MongoDB успешно установлено.");
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
-                        "Соединение с MongoDB успешно установлено."));
+                        "MongoDB: соединение успешно установлено."));
 
                 return true;
             } catch (Exception e) {
                 attempts++;
 //                System.out.println("Попытка " + attempts + " подключения к MongoDB не удалась: " + e.getMessage());
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Попытка " + attempts + " подключения к MongoDB не удалась: " + e.getMessage()));
+                        "MongoDB: " + attempts + "-я попытка подключения не удалась: " + e.getMessage()));
             }
         }
 
 //        System.out.println("Ошибка подключения к MongoDB после " + retryCount + " попыток.");
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                "Ошибка подключения к базе данных MongoDB после " + retryCount + " попыток."));
+                "MongoDB: не удалось подключиться к БД после " + retryCount + " попыток."));
 
         return false;
     }

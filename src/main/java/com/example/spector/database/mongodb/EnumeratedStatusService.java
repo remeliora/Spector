@@ -25,9 +25,9 @@ public class EnumeratedStatusService {
         // Проверка, существует ли коллекция с таким именем
         if (!enumeratedStatusMongoTemplate.collectionExists(parameterName)) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Коллекции статусного параметра (" + parameterName + ") не найдена"));
+                    "MongoDB: коллекции статусного параметра (" + parameterName + ") не найдены"));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                    "Коллекции статусного параметра (" + parameterName + ") не найдена"));
+                    "MongoDB: коллекции статусного параметра (" + parameterName + ") не найдены"));
             throw new IllegalArgumentException("No Collection found for parameter: " + parameterName);
         }
         // Находим коллекцию по имени параметра
@@ -39,9 +39,9 @@ public class EnumeratedStatusService {
             return status.getEnumValues(); // Возвращаем карту значений статусов
         } else {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    "Не найден статус параметра " + parameterName));
+                    "MongoDB: не найден статус параметра " + parameterName));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                    "Не найден статус параметра " + parameterName));
+                    "MongoDB: не найден статус параметра " + parameterName));
             throw new IllegalArgumentException("No status found for parameter: " + parameterName);
         }
     }
