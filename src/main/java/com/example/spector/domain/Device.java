@@ -34,6 +34,8 @@ public class Device {
 
     private String description;
 
+    private String location;
+
     private Integer period;
 
     @Enumerated(EnumType.STRING)

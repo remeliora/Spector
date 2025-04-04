@@ -1,6 +1,7 @@
 package com.example.spector.modules.handler;
 
 import com.example.spector.database.mongodb.EnumeratedStatusService;
+import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.ParameterDTO;
@@ -23,12 +24,13 @@ public class EnumeratedParameterHandler implements ParameterHandler {
     private final EnumeratedStatusService enumeratedStatusService;
 
     @Override
-    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
-                                  List<ThresholdDTO> thresholdDTOList, AppSettingDTO appSettingDTO) {
+    public ResultValue handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
+                                       List<ThresholdDTO> thresholdDTOList, AppSettingDTO appSettingDTO) {
         Integer intValue = (Integer) value;
         Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
         // Преобразуем фактическое значение в статусную строку
         String actualStatus = statusMap.getOrDefault(intValue, "Неизвестный ключ");
+        String status = "OK";
 
         for (ThresholdDTO thresholdDTO : thresholdDTOList) {
             if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
@@ -36,6 +38,7 @@ public class EnumeratedParameterHandler implements ParameterHandler {
                 // Преобразуем допустимое значение порога в статусную строку, если возможно
                 String allowedStatus = statusMap.getOrDefault(matchExact, String.valueOf(matchExact));
                 if (matchExact != intValue) {
+                    status = "ERROR";
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " + actualStatus
                             + ". Допустимое значение [" + allowedStatus + "]"));
@@ -49,6 +52,6 @@ public class EnumeratedParameterHandler implements ParameterHandler {
             }
         }
 
-        return actualStatus;
+        return new ResultValue(actualStatus, status);
     }
 }

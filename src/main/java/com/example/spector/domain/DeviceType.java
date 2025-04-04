@@ -19,6 +19,8 @@ public class DeviceType {
 
     private String name;
 
+    private String className;
+
     private String description;
 
     @JsonBackReference(value = "parameterDeviceType")

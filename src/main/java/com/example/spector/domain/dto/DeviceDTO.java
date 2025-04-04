@@ -13,6 +13,7 @@ public class DeviceDTO {
     private String ipAddress;
     private DeviceTypeDTO deviceType;
     private String description;
+    private String location;
     private Integer period;
     private String alarmType;
     private Boolean isEnable;

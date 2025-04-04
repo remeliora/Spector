@@ -10,6 +10,7 @@ import java.util.List;
 public class DeviceTypeDTO {
     private Long id;
     private String name;
+    private String className;
     private String description;
     private List<DeviceDTO> device;
     private List<ParameterDTO> parameter;

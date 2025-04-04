@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,7 +21,11 @@ public class DeviceData {
 
     private String deviceIp;
 
+    private String location;
+
+    private String status;
+
     private LocalDateTime lastPollingTime;
 
-    private Map<String, Object> parameters;
+    private List<ParameterData> parameters;
 }

@@ -1,16 +1,15 @@
 package com.example.spector.database.dao;
 
-import com.example.spector.domain.DeviceData;
-import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.database.mongodb.DeviceDataService;
+import com.example.spector.domain.DeviceData;
+import com.example.spector.domain.ParameterData;
+import com.example.spector.domain.dto.DeviceDTO;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -32,15 +31,13 @@ public class MongoDBDAO implements DAO {
         deviceData.setDeviceId((Long) snmpData.get("deviceId"));
         deviceData.setDeviceName((String) snmpData.get("deviceName"));
         deviceData.setDeviceIp((String) snmpData.get("deviceIp"));
+        deviceData.setLocation((String) snmpData.get("location"));
+        deviceData.setStatus((String) snmpData.get("status"));
         deviceData.setLastPollingTime((LocalDateTime) snmpData.get("lastPollingTime"));
 
-        Map<String, Object> parameters = new HashMap<>(snmpData);
-        parameters.remove("deviceId");
-        parameters.remove("deviceName");
-        parameters.remove("deviceIp");
-        parameters.remove("lastPollingTime");
-
-        deviceData.setParameters(parameters);
+        // Извлекаем список параметров, который мы сохранили под ключом "parameters"
+        List<ParameterData> parameterDataList = (List<ParameterData>) snmpData.get("parameters");
+        deviceData.setParameters(parameterDataList);
 
         //  Вызываем метод сервиса для создания записи в базе данных MongoDB
         deviceDataService.saveDeviceData(deviceDTO.getName(), deviceData);

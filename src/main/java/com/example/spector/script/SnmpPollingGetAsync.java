@@ -2,16 +2,20 @@ package com.example.spector.script;
 
 import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.postgres.DataBaseService;
+import com.example.spector.domain.ParameterData;
+import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.*;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.checker.device.DeviceConnectionChecker;
 import com.example.spector.modules.converter.VariableCaster;
+import com.example.spector.modules.datapattern.BaseSNMPStatus;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import com.example.spector.modules.handler.ParameterHandler;
 import com.example.spector.modules.handler.ParameterHandlerFactory;
+import com.example.spector.modules.datapattern.BaseSNMPData;
 import com.example.spector.modules.snmp.SNMPService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -45,6 +51,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     private final VariableCaster variableCaster;
     private final ConcurrentMap<Long, LocalDateTime> schedule = new ConcurrentHashMap<>();
     private final ParameterHandlerFactory parameterHandlerFactory;
+    private final BaseSNMPData baseSNMPData;
+    private final BaseSNMPStatus baseSNMPStatus;
 
     @Transactional
     public void pollDevices() {
@@ -87,11 +95,22 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             value = { IOException.class, TimeoutException.class },
             backoff = @Backoff(delay = 1000, multiplier = 2))  // Ретрай с задержкой в секундах
     public void retryPollDevice(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) throws IOException, TimeoutException {
+        Map<String, Object> snmpData = baseSNMPData.defaultSNMPDeviceData(deviceDTO);
+
         if (isReadyToPoll(deviceDTO)) {
             if (deviceConnectionChecker.isAvailableByIP(deviceDTO.getIpAddress())) {
-                Map<String, Object> snmpData = snmpPoll(deviceDTO, appSettingDTO);
-                daoService.writeData(deviceDTO, snmpData);
+                snmpData.put("status", "OK");
+                Map<String, Object> additionalData = snmpPoll(deviceDTO, appSettingDTO);
+
+                // Получаем список параметров
+                List<ParameterData> parameterDataList = (List<ParameterData>) additionalData.get("parameters");
+                // Определяем, есть ли хотя бы один параметр с ошибочным статусом
+                String deviceStatus = baseSNMPStatus.determineStatus(parameterDataList);
+                snmpData.put("status", deviceStatus); // Устанавливаем статус устройства
+
+                snmpData.putAll(additionalData);
             } else {
+                snmpData.put("status", "ERROR");
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                         deviceDTO.getName() + ": отсутствует соединение с устройством!"));
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
@@ -100,6 +119,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                         appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                         deviceDTO.getName() + ": отсутствует соединение с устройством!")));
             }
+            daoService.writeData(deviceDTO, snmpData);
         }
     }
 
@@ -135,11 +155,9 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     }
 
     private Map<String, Object> snmpPoll(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) {
-        ConcurrentMap<String, Object> snmpData = new ConcurrentHashMap<>();
-        snmpData.put("deviceId", deviceDTO.getId());
-        snmpData.put("deviceName", deviceDTO.getName());
-        snmpData.put("deviceIp", deviceDTO.getIpAddress());
-        snmpData.put("lastPollingTime", LocalDateTime.now());
+        // Используем синхронизированный список для потокобезопасного добавления данных
+        List<ParameterData> parameterDataList = Collections.synchronizedList(new ArrayList<>());
+
         // Загружаем полный объект DeviceTypeDTO с параметрами
         DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
         List<ParameterDTO> parameterDTOList = deviceTypeDTO.getParameter();
@@ -153,7 +171,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             List<CompletableFuture<Void>> futureParameterList = parameterDTOList.stream()
                     .map(parameterDTO -> CompletableFuture.runAsync(() -> {
                         try {
-                            pollParameterAsync(deviceDTO, parameterDTO, snmpData, snmp, appSettingDTO);
+                            pollParameterAsync(deviceDTO, parameterDTO, /*snmpData*/ parameterDataList, snmp, appSettingDTO);
                         } catch (Exception e) {
                             e.printStackTrace();
                             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
@@ -178,12 +196,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
         }
 
-        return snmpData;
+        return Collections.singletonMap("parameters", parameterDataList);
     }
 
     @Async("taskExecutor")
     public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
-                                                      Map<String, Object> snmpData, Snmp snmp,
+                                                      List<ParameterData> parameterDataList, Snmp snmp,
                                                       AppSettingDTO appSettingDTO) {
         MDC.put("deviceName", deviceDTO.getName());
         try {
@@ -193,6 +211,8 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             pdu.setType(PDU.GET);
 
             VariableBinding result = snmpService.performSnmpGet(deviceDTO.getIpAddress(), pdu, snmp);
+            ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
+
             if (result == null || result.getVariable() == null) {
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                         deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
@@ -201,6 +221,10 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                 eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
                         appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                         deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
+
+                parameterData.setValue(null);
+                parameterData.setStatus("NO_DATA");
+                parameterDataList.add(parameterData);
 
                 return CompletableFuture.completedFuture(null);
             }
@@ -211,12 +235,14 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             Object castValue = variableCaster.convert(parameterDTO, variable);
 
             ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
-            Object processedValue = parameterHandler.handleParameter(deviceDTO, parameterDTO, castValue,
+            ResultValue resultValue = parameterHandler.handleParameter(deviceDTO, parameterDTO, castValue,
                     thresholdDTOList, appSettingDTO);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "Параметр - " + parameterDTO.getDescription() + ": " + processedValue));
+                    "Параметр - " + parameterDTO.getDescription() + ": " + resultValue.getValue()));
 
-            snmpData.put(parameterDTO.getName(), processedValue);
+            parameterData.setValue(resultValue.getValue());
+            parameterData.setStatus(resultValue.getStatus());
+            parameterDataList.add(parameterData);
         } catch (Exception e) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные повреждены: " + e));
@@ -225,6 +251,12 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
                     appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                     deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные повреждены"));
+
+            // В случае ошибки создаем запись с соответствующим статусом
+            ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
+            parameterData.setValue(null);
+            parameterData.setStatus("ERROR");
+            parameterDataList.add(parameterData);
         } finally {
             MDC.clear();  // Очищаем MDC после завершения
         }

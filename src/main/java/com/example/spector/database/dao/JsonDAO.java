@@ -23,6 +23,10 @@ import java.util.Map;
 @Qualifier("jsonDAO")
 @RequiredArgsConstructor
 public class JsonDAO implements DAO {
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .enable(SerializationFeature.INDENT_OUTPUT);
     private final EventDispatcher eventDispatcher;
 
     //  Метод проверки наличия JSON-файла устройства и его создания
@@ -58,17 +62,14 @@ public class JsonDAO implements DAO {
         Path filePath = Paths.get("logs/JsonFiles", deviceDTO.getName() + ".json");
         File deviceFileName = filePath.toFile();
 
-        if (snmpData == null && snmpData.isEmpty()) {
+        if (snmpData == null || snmpData.isEmpty()) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Ошибка: данные SNMP отсутствуют для: " + deviceDTO.getName()));
 
             return;
         }
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
+        try {
             // Преобразование данных в формат JSON
             String jsonData = objectMapper.writeValueAsString(snmpData);
 

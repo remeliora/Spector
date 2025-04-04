@@ -1,5 +1,6 @@
 package com.example.spector.modules.handler;
 
+import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.DeviceDTO;
 import com.example.spector.domain.dto.ParameterDTO;
@@ -21,10 +22,11 @@ public class RegularParameterHandler implements ParameterHandler {
     private final EventDispatcher eventDispatcher;
 
     @Override
-    public Object handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
-                                  List<ThresholdDTO> thresholds, AppSettingDTO appSettingDTO) {
+    public ResultValue handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
+                                       List<ThresholdDTO> thresholds, AppSettingDTO appSettingDTO) {
         Object processedValue = applyModifications(DataType.valueOf(parameterDTO.getDataType()), value,
                 parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+        String status = "OK";
 
         for (ThresholdDTO thresholdDTO : thresholds) {
             if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
@@ -32,6 +34,7 @@ public class RegularParameterHandler implements ParameterHandler {
                 double highValue = thresholdDTO.getHighValue();
 
                 if ((double) processedValue < lowValue || (double) processedValue > highValue) {
+                    status = "ERROR";
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
                             processedValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
@@ -46,7 +49,7 @@ public class RegularParameterHandler implements ParameterHandler {
             }
         }
 
-        return processedValue;
+        return new ResultValue(processedValue, status);
     }
 
     private Object applyModifications(DataType dataType, Object value,
