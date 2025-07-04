@@ -1,7 +1,7 @@
 package com.example.spector.mapper;
 
 import com.example.spector.domain.DeviceType;
-import com.example.spector.domain.dto.DeviceTypeDTO;
+import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;

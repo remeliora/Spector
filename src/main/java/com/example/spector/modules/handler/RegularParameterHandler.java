@@ -2,8 +2,8 @@ package com.example.spector.modules.handler;
 
 import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
-import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.device.DeviceDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.DataType;
@@ -28,8 +28,16 @@ public class RegularParameterHandler implements ParameterHandler {
                 parameterDTO.getAdditive(), parameterDTO.getCoefficient());
         String status = "OK";
 
-        for (ThresholdDTO thresholdDTO : thresholds) {
-            if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
+        // Фильтруем пороги для текущего устройства
+        List<ThresholdDTO> deviceThresholds = thresholds.stream()
+                .filter(t -> t.getDevice().getId().equals(deviceDTO.getId()))
+                .toList();
+
+        // Если порогов нет для текущего устройства - сразу статус INACTIVE
+        if (deviceThresholds.isEmpty()) {
+            status = "INACTIVE";
+        } else {
+            for (ThresholdDTO thresholdDTO : deviceThresholds) {
                 double lowValue = thresholdDTO.getLowValue();
                 double highValue = thresholdDTO.getHighValue();
 

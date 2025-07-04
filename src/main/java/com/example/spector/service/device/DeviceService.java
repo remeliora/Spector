@@ -1,4 +1,4 @@
-package com.example.spector.service;
+package com.example.spector.service.device;
 
 import com.example.spector.domain.Device;
 import com.example.spector.repositories.DeviceRepository;

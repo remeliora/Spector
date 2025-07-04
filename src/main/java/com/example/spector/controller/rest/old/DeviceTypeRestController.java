@@ -1,7 +1,7 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.old;
 
 import com.example.spector.domain.DeviceType;
-import com.example.spector.service.DeviceTypeService;
+import com.example.spector.service.devicetype.DeviceTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -3,17 +3,16 @@ package com.example.spector.controller.thymeleaf;
 import com.example.spector.domain.Device;
 import com.example.spector.domain.Parameter;
 import com.example.spector.domain.Threshold;
-import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.device.DeviceDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.mapper.DeviceDTOConverter;
 import com.example.spector.mapper.ParameterDTOConverter;
 import com.example.spector.mapper.ThresholdDTOConverter;
-import com.example.spector.service.DeviceService;
-import com.example.spector.service.ParameterService;
-import com.example.spector.service.ThresholdService;
+import com.example.spector.service.device.DeviceService;
+import com.example.spector.service.parameter.ParameterService;
+import com.example.spector.service.threshold.ThresholdService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,7 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/thresholds")
-public class ThresholdController {
+public class ThresholdThymeleafController {
     private final ThresholdService thresholdService;
     private final ParameterService parameterService;
     private final DeviceService deviceService;

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ThresholdRepository extends JpaRepository<Threshold, Long> {
     List<Threshold> findThresholdByParameterIdAndIsEnableTrue(Long parameterId);
+    List<Threshold> findThresholdByParameterId(Long parameterId);
 }

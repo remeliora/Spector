@@ -1,6 +1,6 @@
 package com.example.spector.modules.converter;
 
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;

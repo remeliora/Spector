@@ -1,5 +1,7 @@
-package com.example.spector.domain.dto;
+package com.example.spector.domain.dto.device;
 
+import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import lombok.Getter;
 import lombok.Setter;
 

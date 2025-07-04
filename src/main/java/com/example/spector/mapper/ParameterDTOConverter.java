@@ -1,7 +1,7 @@
 package com.example.spector.mapper;
 
 import com.example.spector.domain.Parameter;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;

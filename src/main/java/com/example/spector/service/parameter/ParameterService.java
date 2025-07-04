@@ -1,4 +1,4 @@
-package com.example.spector.service;
+package com.example.spector.service.parameter;
 
 import com.example.spector.domain.Parameter;
 import com.example.spector.repositories.ParameterRepository;

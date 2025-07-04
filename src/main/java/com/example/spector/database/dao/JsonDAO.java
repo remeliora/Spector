@@ -1,6 +1,7 @@
 package com.example.spector.database.dao;
 
-import com.example.spector.domain.dto.DeviceDTO;
+import com.example.spector.domain.DeviceData;
+import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @Qualifier("jsonDAO")
@@ -32,7 +34,7 @@ public class JsonDAO implements DAO {
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
-        Path dirPath = Paths.get("logs/JsonFiles");
+        Path dirPath = Paths.get("data/JSON");
         try {
             Files.createDirectories(dirPath);
         } catch (IOException e) {
@@ -59,7 +61,7 @@ public class JsonDAO implements DAO {
     //  Метод записи данных в Json-файл устройства
     @Override
     public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
-        Path filePath = Paths.get("logs/JsonFiles", deviceDTO.getName() + ".json");
+        Path filePath = Paths.get("data/JSON", deviceDTO.getName() + ".json");
         File deviceFileName = filePath.toFile();
 
         if (snmpData == null || snmpData.isEmpty()) {
@@ -78,6 +80,25 @@ public class JsonDAO implements DAO {
         } catch (IOException e) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Ошибка при записи данных SNMP в файл: " + e.getMessage()));
+        }
+    }
+
+    @Override
+    public Optional<DeviceData> readData(DeviceDTO deviceDTO) {
+        Path filePath = Paths.get("data/JSON", deviceDTO.getName() + ".json");
+        if (!Files.exists(filePath)) {
+            return Optional.empty();
+        }
+
+        try {
+            DeviceData deviceData = objectMapper.readValue(filePath.toFile(), DeviceData.class);
+
+            return Optional.of(deviceData);
+        } catch (IOException e) {
+            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+                    "Ошибка при чтении JSON-файла для " + deviceDTO.getName() + ": " + e.getMessage()));
+
+            return Optional.empty();
         }
     }
 }

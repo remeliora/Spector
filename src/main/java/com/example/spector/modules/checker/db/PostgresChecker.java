@@ -22,8 +22,8 @@ public class PostgresChecker implements DBChecker {
             try {
                 jdbcTemplate.queryForObject("SELECT 1", Integer.class);
 //                System.out.println("Соединение с Postgres базой данных успешно установлено.");
-                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
-                        "Postgres: соединение успешно установлено."));
+//                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
+//                        "Postgres: соединение успешно установлено."));
 
                 return true;
             } catch (Exception e) {

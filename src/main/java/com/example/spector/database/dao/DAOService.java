@@ -1,6 +1,6 @@
 package com.example.spector.database.dao;
 
-import com.example.spector.domain.dto.DeviceDTO;
+import com.example.spector.domain.dto.device.DeviceDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;

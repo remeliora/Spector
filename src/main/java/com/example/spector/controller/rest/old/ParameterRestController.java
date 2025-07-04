@@ -1,7 +1,7 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.old;
 
 import com.example.spector.domain.Parameter;
-import com.example.spector.service.ParameterService;
+import com.example.spector.service.parameter.ParameterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -2,12 +2,12 @@ package com.example.spector.controller.thymeleaf;
 
 import com.example.spector.domain.DeviceType;
 import com.example.spector.domain.Parameter;
-import com.example.spector.domain.dto.DeviceTypeDTO;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.mapper.DeviceTypeDTOConverter;
 import com.example.spector.mapper.ParameterDTOConverter;
-import com.example.spector.service.DeviceTypeService;
-import com.example.spector.service.ParameterService;
+import com.example.spector.service.devicetype.DeviceTypeService;
+import com.example.spector.service.parameter.ParameterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,7 +19,7 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/parameters")
-public class ParameterController {
+public class ParameterThymeleafController {
     private final ParameterService parameterService;
     private final DeviceTypeService deviceTypeService;
     private final ParameterDTOConverter parameterDTOConverter;

@@ -26,8 +26,8 @@ public class MongoDBChecker implements DBChecker {
             try {
                 deviceDataMongoTemplate.executeCommand("{ ping: 1 }");
 //                System.out.println("Соединение с MongoDB успешно установлено.");
-                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
-                        "MongoDB: соединение успешно установлено."));
+//                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
+//                        "MongoDB: соединение успешно установлено."));
 
                 return true;
             } catch (Exception e) {

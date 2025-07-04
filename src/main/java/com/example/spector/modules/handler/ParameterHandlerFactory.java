@@ -1,6 +1,6 @@
 package com.example.spector.modules.handler;
 
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

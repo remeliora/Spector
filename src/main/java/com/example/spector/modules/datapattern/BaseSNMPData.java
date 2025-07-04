@@ -1,8 +1,8 @@
 package com.example.spector.modules.datapattern;
 
 import com.example.spector.domain.ParameterData;
-import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.device.DeviceDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,6 +16,7 @@ public class BaseSNMPData {
         snmpData.put("deviceId", deviceDTO.getId());
         snmpData.put("deviceName", deviceDTO.getName());
         snmpData.put("deviceIp", deviceDTO.getIpAddress());
+        snmpData.put("location", deviceDTO.getLocation());
         snmpData.put("lastPollingTime", LocalDateTime.now());
 
         return snmpData;

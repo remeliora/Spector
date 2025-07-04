@@ -3,8 +3,8 @@ package com.example.spector.modules.handler;
 import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
-import com.example.spector.domain.dto.DeviceDTO;
-import com.example.spector.domain.dto.ParameterDTO;
+import com.example.spector.domain.dto.device.DeviceDTO;
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.ThresholdDTO;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
@@ -32,8 +32,16 @@ public class EnumeratedParameterHandler implements ParameterHandler {
         String actualStatus = statusMap.getOrDefault(intValue, "Неизвестный ключ");
         String status = "OK";
 
-        for (ThresholdDTO thresholdDTO : thresholdDTOList) {
-            if (thresholdDTO.getDevice().getId().equals(deviceDTO.getId())) {
+        // Фильтруем пороги для текущего устройства
+        List<ThresholdDTO> deviceThresholds = thresholdDTOList.stream()
+                .filter(t -> t.getDevice().getId().equals(deviceDTO.getId()))
+                .toList();
+
+        // Если порогов нет для текущего устройства - сразу статус INACTIVE
+        if (deviceThresholds.isEmpty()) {
+            status = "INACTIVE";
+        } else {
+            for (ThresholdDTO thresholdDTO : deviceThresholds) {
                 int matchExact = thresholdDTO.getMatchExact();
                 // Преобразуем допустимое значение порога в статусную строку, если возможно
                 String allowedStatus = statusMap.getOrDefault(matchExact, String.valueOf(matchExact));
@@ -44,7 +52,7 @@ public class EnumeratedParameterHandler implements ParameterHandler {
                             + ". Допустимое значение [" + allowedStatus + "]"));
                     eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                             thresholdDTO.getParameter().getName() + ": " +
-                                    " = " + actualStatus + ". Допустимое значение [" + allowedStatus + "]"));
+                            " = " + actualStatus + ". Допустимое значение [" + allowedStatus + "]"));
                     eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
                             appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " + actualStatus));

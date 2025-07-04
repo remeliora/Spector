@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +48,8 @@ public class Parameter {
     private DataType dataType;
 
     @JsonBackReference(value = "parameter")
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parameter", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Threshold> thresholds;
 
     @Override
@@ -59,7 +62,7 @@ public class Parameter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Parameter parameter = (Parameter) o;
-        return Objects.equals(id, parameter.id) && Objects.equals(name, parameter.name);
+        return Objects.equals(id, parameter.id);  // Только по ID
     }
     @Override
     public String toString() {

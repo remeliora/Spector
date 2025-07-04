@@ -1,4 +1,4 @@
-package com.example.spector.service;
+package com.example.spector.service.threshold;
 
 import com.example.spector.domain.Threshold;
 import com.example.spector.repositories.ThresholdRepository;

@@ -1,4 +1,4 @@
-package com.example.spector.domain.dto;
+package com.example.spector.domain.dto.devicedata;
 
 import lombok.Getter;
 import lombok.Setter;
