@@ -6,6 +6,7 @@ import com.example.spector.domain.dto.*;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
+import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.mapper.*;
 import com.example.spector.repositories.*;
 import lombok.RequiredArgsConstructor;

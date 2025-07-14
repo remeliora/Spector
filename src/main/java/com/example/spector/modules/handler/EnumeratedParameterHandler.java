@@ -5,7 +5,7 @@ import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
-import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;

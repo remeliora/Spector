@@ -1,7 +1,7 @@
 package com.example.spector.mapper;
 
 import com.example.spector.domain.Threshold;
-import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;

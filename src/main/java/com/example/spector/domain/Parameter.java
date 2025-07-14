@@ -48,8 +48,8 @@ public class Parameter {
     private DataType dataType;
 
     @JsonBackReference(value = "parameter")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
+    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
     private List<Threshold> thresholds;
 
     @Override

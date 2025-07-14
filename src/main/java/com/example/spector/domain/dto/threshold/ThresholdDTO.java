@@ -1,4 +1,4 @@
-package com.example.spector.domain.dto;
+package com.example.spector.domain.dto.threshold;
 
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;

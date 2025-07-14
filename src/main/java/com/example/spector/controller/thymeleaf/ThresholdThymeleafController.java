@@ -5,7 +5,7 @@ import com.example.spector.domain.Parameter;
 import com.example.spector.domain.Threshold;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
-import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.mapper.DeviceDTOConverter;
 import com.example.spector.mapper.ParameterDTOConverter;
 import com.example.spector.mapper.ThresholdDTOConverter;

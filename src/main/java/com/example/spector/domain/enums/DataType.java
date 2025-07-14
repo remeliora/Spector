@@ -1,7 +1,9 @@
 package com.example.spector.domain.enums;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public enum DataType {
     INTEGER("Целое число"),
@@ -11,7 +13,4 @@ public enum DataType {
 
     private final String displayName;
 
-    public String getDisplayName() {
-        return displayName;
-    }
 }

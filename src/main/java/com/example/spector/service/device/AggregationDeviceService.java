@@ -4,6 +4,7 @@ import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceType;
 import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
+import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.DeviceTypeRepository;
@@ -11,6 +12,10 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,15 @@ public class AggregationDeviceService {
         return deviceRepository.findById(id)
                 .map(device -> baseDTOConverter.toDTO(device, DeviceDetailDTO.class))
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
+    }
+
+    @Transactional
+    public List<DeviceTypeShortDTO> getAvailableDeviceTypes() {
+        return deviceTypeRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(DeviceType::getName))
+                .map(deviceType -> baseDTOConverter.toDTO(deviceType, DeviceTypeShortDTO.class))
+                .collect(Collectors.toList());
     }
 
     //================
@@ -61,9 +75,10 @@ public class AggregationDeviceService {
         existingDevice.setIpAddress(updateDTO.getIpAddress());
         // Обновление типа устройства (если изменился)
         if (!existingDevice.getDeviceType().getId().equals(updateDTO.getDeviceTypeId())) {
-            DeviceType newType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
-                    .orElseThrow(() -> new EntityNotFoundException("Тип устройства не найден"));
-            existingDevice.setDeviceType(newType);
+            DeviceType newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
+                    .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " +
+                                                                   updateDTO.getDeviceTypeId()));
+            existingDevice.setDeviceType(newDeviceType);
         }
         existingDevice.setDescription(updateDTO.getDescription());
         existingDevice.setLocation(updateDTO.getLocation());

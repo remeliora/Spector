@@ -46,8 +46,8 @@ public class Device {
     private Boolean isEnable;
 
     @JsonBackReference(value = "device")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
+    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
     private List<Threshold> thresholds;
 
     @Override

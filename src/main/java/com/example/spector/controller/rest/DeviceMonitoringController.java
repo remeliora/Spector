@@ -4,6 +4,8 @@ import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataBaseDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataDetailDTO;
+import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
+import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
 import com.example.spector.service.device.AggregationDeviceService;
 import com.example.spector.service.devicedata.AggregationDeviceDataService;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,15 @@ public class DeviceMonitoringController {
     }
 
     /**
+     * GET /api/main/devices/available-device-types
+     */
+    // Получение списка всех типов устройств для устройства
+    @GetMapping("/available-device-types")
+    public List<DeviceTypeShortDTO> getAvailableDeviceTypes() {
+        return aggregationDeviceService.getAvailableDeviceTypes();
+    }
+
+    /**
      * PUT /api/main/devices/{deviceId}/enable
      */
     // Включение устройства
@@ -62,7 +73,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * GET /api/main/devicees/{deviceId}
+     * GET /api/main/devices/{deviceId}
      */
     // Получение деталей устройства
     @GetMapping("/{deviceId}")
@@ -71,7 +82,7 @@ public class DeviceMonitoringController {
     }
 
     // Создание устройства
-    @PostMapping("/{deviceId}")
+    @PostMapping
     public ResponseEntity<DeviceDetailDTO> createDevice(
             @RequestBody DeviceCreateDTO createDTO) {
         DeviceDetailDTO created = aggregationDeviceService.createDevice(createDTO);

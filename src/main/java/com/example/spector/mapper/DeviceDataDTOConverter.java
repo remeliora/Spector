@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DeviceDataDTOConverter implements ConverterDTO<DeviceData, DeviceDataDTO>{
+public class DeviceDataDTOConverter implements ConverterDTO<DeviceData, DeviceDataDTO> {
     private final ModelMapper modelMapper;
 
     @Override

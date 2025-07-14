@@ -1,6 +1,6 @@
 package com.example.spector.domain.dto.parameter;
 
-import com.example.spector.domain.dto.ThresholdDTO;
+import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import lombok.Getter;
 import lombok.Setter;
