@@ -4,7 +4,6 @@ import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataBaseDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataDetailDTO;
-import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
 import com.example.spector.service.device.AggregationDeviceService;
 import com.example.spector.service.devicedata.AggregationDeviceDataService;

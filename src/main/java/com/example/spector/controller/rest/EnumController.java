@@ -15,11 +15,19 @@ import java.util.List;
 public class EnumController {
     private final EnumService enumService;
 
+    /**
+     * GET /api/main/enums/alarm-types
+     */
+    // Получение значений Enum - Alarm Types
     @GetMapping("/alarm-types")
     public List<EnumDTO> getAlarmTypes() {
         return enumService.getAlarmTypes();
     }
 
+    /**
+     * GET /api/main/enums/data-types
+     */
+    // Получение значений Enum - Data Types
     @GetMapping("/data-types")
     public List<EnumDTO> getDataTypes() {
         return enumService.getDataTypes();

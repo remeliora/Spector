@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum DataType {
-    INTEGER("Целое число"),
-    DOUBLE("Дробное число"),
+    INTEGER("Целочисленный"),
+    DOUBLE("Дробный"),
     LONG("Большое целое число"),
-    STRING("Строковое значение");
+    STRING("Строковый");
 
     private final String displayName;
 
