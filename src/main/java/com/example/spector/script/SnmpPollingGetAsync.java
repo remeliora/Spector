@@ -6,7 +6,6 @@ import com.example.spector.domain.ParameterData;
 import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
-import com.example.spector.domain.dto.devicetype.DeviceTypeDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.domain.enums.AlarmType;
@@ -96,7 +95,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
 
     // Механизм ретраев
     @Retryable(
-            value = { IOException.class, TimeoutException.class },
+            value = {IOException.class, TimeoutException.class},
             backoff = @Backoff(delay = 1000, multiplier = 2))  // Ретрай с задержкой в секундах
     public void retryPollDevice(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) throws IOException, TimeoutException {
         Map<String, Object> snmpData = baseSNMPData.defaultSNMPDeviceData(deviceDTO);
@@ -163,8 +162,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         List<ParameterData> parameterDataList = Collections.synchronizedList(new ArrayList<>());
 
         // Загружаем полный объект DeviceTypeDTO с параметрами
-        DeviceTypeDTO deviceTypeDTO = dataBaseService.loadDeviceTypeWithParameters(deviceDTO.getDeviceType().getId());
-        List<ParameterDTO> parameterDTOList = deviceTypeDTO.getParameter();
+        List<ParameterDTO> parameterDTOList = dataBaseService.getActiveParametersForDevice(deviceDTO.getId());
         eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
                 "Кол-во параметров: " + parameterDTOList.size()));
 
@@ -182,7 +180,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                                     deviceDTO.getName() + ": " + parameterDTO.getName() +
                                     " - ошибка опроса: " + e));
                             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                                    parameterDTO.getName() +  " - ошибка опроса: " + e));
+                                    parameterDTO.getName() + " - ошибка опроса: " + e));
                         }
                     }))
                     .toList();

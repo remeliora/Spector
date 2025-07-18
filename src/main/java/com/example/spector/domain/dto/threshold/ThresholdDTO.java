@@ -10,7 +10,7 @@ import lombok.Setter;
 public class ThresholdDTO {
     private Long id;
     private Double lowValue;
-    private Integer matchExact;
+    private String matchExact;
     private Double highValue;
     private Boolean isEnable;
     private ParameterDTO parameter;

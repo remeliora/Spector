@@ -44,9 +44,12 @@ public class Device {
     private Boolean isEnable;
 
     @JsonBackReference(value = "device")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
-    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     private List<Threshold> thresholds;
+
+    @JsonBackReference(value = "deviceOverride")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
+    private List<DeviceParameterOverride> deviceParameterOverrides;
 
     @Override
     public int hashCode() {

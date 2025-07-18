@@ -1,6 +1,5 @@
 package com.example.spector.modules.handler;
 
-import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.domain.ResultValue;
 import com.example.spector.domain.dto.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
@@ -15,21 +14,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class EnumeratedParameterHandler implements ParameterHandler {
     private final EventDispatcher eventDispatcher;
-    private final EnumeratedStatusService enumeratedStatusService;
 
     @Override
     public ResultValue handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
                                        List<ThresholdDTO> thresholdDTOList, AppSettingDTO appSettingDTO) {
-        Integer intValue = (Integer) value;
-        Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
-        // Преобразуем фактическое значение в статусную строку
-        String actualStatus = statusMap.getOrDefault(intValue, "Неизвестный ключ");
+        String actualStatus = (String) value;
         String status = "OK";
 
         // Фильтруем пороги для текущего устройства
@@ -42,10 +36,8 @@ public class EnumeratedParameterHandler implements ParameterHandler {
             status = "INACTIVE";
         } else {
             for (ThresholdDTO thresholdDTO : deviceThresholds) {
-                int matchExact = thresholdDTO.getMatchExact();
-                // Преобразуем допустимое значение порога в статусную строку, если возможно
-                String allowedStatus = statusMap.getOrDefault(matchExact, String.valueOf(matchExact));
-                if (matchExact != intValue) {
+                String allowedStatus = thresholdDTO.getMatchExact();
+                if (!actualStatus.equals(allowedStatus)) {
                     status = "ERROR";
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " + actualStatus

@@ -9,7 +9,8 @@ public enum DataType {
     INTEGER("Целочисленный"),
     DOUBLE("Дробный"),
     LONG("Большое целое число"),
-    STRING("Строковый");
+    STRING("Строковый"),
+    ENUMERATED("Перечисляемый");
 
     private final String displayName;
 

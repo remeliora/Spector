@@ -1,5 +1,6 @@
 package com.example.spector.modules.converter;
 
+import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
@@ -12,7 +13,7 @@ public class StringTypeCaster implements TypeCaster<String> {
     private final EventDispatcher eventDispatcher;
 
     @Override
-    public String cast(Variable variable) {
+    public String cast(ParameterDTO parameterDTO, Variable variable) {
         if (variable == null) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Пустое значение!"));

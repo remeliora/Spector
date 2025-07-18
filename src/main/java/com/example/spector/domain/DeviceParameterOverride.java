@@ -9,23 +9,20 @@ import lombok.Setter;
 
 import java.util.Objects;
 
-
-@Getter
-@Setter
 @Entity
-@Table(name = "thresholds")
-public class Threshold {
+@Setter
+@Getter
+@Table(name = "device_parameter_overrides")
+public class DeviceParameterOverride {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Double lowValue;
-
-    private String matchExact;
-
-    private Double highValue;
-
-    private Boolean isEnable;
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "device_id", referencedColumnName = "id")
+    private Device device;
 
     @JsonIdentityReference(alwaysAsId = true)
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -33,11 +30,7 @@ public class Threshold {
     @JoinColumn(name = "parameter_id", referencedColumnName = "id")
     private Parameter parameter;
 
-    @JsonIdentityReference(alwaysAsId = true)
-    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "device_id", referencedColumnName = "id")
-    private Device device;
+    private Boolean isActive;
 
     @Override
     public int hashCode() {
@@ -48,7 +41,7 @@ public class Threshold {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Threshold threshold = (Threshold) o;
-        return Objects.equals(id, threshold.id);
+        DeviceParameterOverride deviceParameterOverride = (DeviceParameterOverride) o;
+        return Objects.equals(id, deviceParameterOverride.id);
     }
 }

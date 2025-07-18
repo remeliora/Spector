@@ -11,7 +11,7 @@ public class ThresholdCreateDTO {
     private Double lowValue;
 
 //    @NotNull(message = "Match Exact is required")
-    private Integer matchExact;
+    private String matchExact;
 
     @NotNull(message = "High Value is required")
     private Double highValue;

@@ -34,7 +34,7 @@ public class JsonDAO implements DAO {
     //  Метод проверки наличия JSON-файла устройства и его создания
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
-        Path dirPath = Paths.get("data/JSON");
+        Path dirPath = Paths.get("data/JSON/devices");
         try {
             Files.createDirectories(dirPath);
         } catch (IOException e) {
@@ -61,7 +61,7 @@ public class JsonDAO implements DAO {
     //  Метод записи данных в Json-файл устройства
     @Override
     public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
-        Path filePath = Paths.get("data/JSON", deviceDTO.getName() + ".json");
+        Path filePath = Paths.get("data/JSON/devices", deviceDTO.getName() + ".json");
         File deviceFileName = filePath.toFile();
 
         if (snmpData == null || snmpData.isEmpty()) {
@@ -85,7 +85,7 @@ public class JsonDAO implements DAO {
 
     @Override
     public Optional<DeviceData> readData(DeviceDTO deviceDTO) {
-        Path filePath = Paths.get("data/JSON", deviceDTO.getName() + ".json");
+        Path filePath = Paths.get("data/JSON/devices", deviceDTO.getName() + ".json");
         if (!Files.exists(filePath)) {
             return Optional.empty();
         }

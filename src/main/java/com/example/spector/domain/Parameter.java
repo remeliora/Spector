@@ -46,9 +46,12 @@ public class Parameter {
     private DataType dataType;
 
     @JsonBackReference(value = "parameter")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
-    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL)
     private List<Threshold> thresholds;
+
+    @JsonBackReference(value = "parameterOverride")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL)
+    private List<DeviceParameterOverride> deviceParameterOverrides;
 
     @Override
     public int hashCode() {

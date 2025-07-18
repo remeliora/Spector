@@ -24,8 +24,12 @@ public class RegularParameterHandler implements ParameterHandler {
     @Override
     public ResultValue handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
                                        List<ThresholdDTO> thresholds, AppSettingDTO appSettingDTO) {
-        Object processedValue = applyModifications(DataType.valueOf(parameterDTO.getDataType()), value,
-                parameterDTO.getAdditive(), parameterDTO.getCoefficient());
+        DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+        // Применяем модификации только для числовых типов
+        Object processedValue = (dataType != DataType.STRING)
+                ? applyModifications(dataType, value, parameterDTO.getAdditive(), parameterDTO.getCoefficient())
+                : value;
+
         String status = "OK";
 
         // Фильтруем пороги для текущего устройства
@@ -66,6 +70,8 @@ public class RegularParameterHandler implements ParameterHandler {
             case INTEGER -> value = (int) (((int) value + additive) * coefficient);
             case DOUBLE -> value = (((double) value + additive) * coefficient);
             case LONG -> value = (long) (((long) value + additive) * coefficient);
+            case STRING -> {
+            }
             default -> {
 //                logger.error("Неподдерживаемый тип данных: {}", dataType);
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,

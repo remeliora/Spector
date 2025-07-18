@@ -1,5 +1,6 @@
 package com.example.spector.modules.converter;
 
+import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TypeCasterFactory {
     private final EventDispatcher eventDispatcher;
+    private final EnumeratedStatusService enumeratedStatusService;
 
     public TypeCaster<?> getTypeCaster(DataType dataType) {
         switch (dataType) {
@@ -26,6 +28,9 @@ public class TypeCasterFactory {
             }
             case STRING -> {
                 return new StringTypeCaster(eventDispatcher);
+            }
+            case ENUMERATED -> {
+                return new EnumeratedTypeCaster(eventDispatcher, enumeratedStatusService);
             }
             default -> {
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
