@@ -1,4 +1,4 @@
-package com.example.spector.service;
+package com.example.spector.service.appsetting;
 
 import com.example.spector.domain.AppSetting;
 import com.example.spector.repositories.AppSettingRepository;

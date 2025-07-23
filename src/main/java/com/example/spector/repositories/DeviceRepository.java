@@ -1,6 +1,7 @@
 package com.example.spector.repositories;
 
 import com.example.spector.domain.Device;
+import com.example.spector.domain.DeviceType;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,4 +14,5 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
     List<Device> findAll();
     List<Device> findDeviceByIsEnableTrue();
     List<Device> findDeviceByLocation(String location);
+    List<Device> findDeviceByDeviceTypeId(Long deviceTypeId);
 }

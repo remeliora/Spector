@@ -1,4 +1,4 @@
-package com.example.spector.domain.dto.parameter.rest;
+package com.example.spector.domain.dto.enumeration;
 
 import com.example.spector.domain.enums.DataType;
 import jakarta.validation.constraints.NotBlank;
@@ -7,13 +7,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Map;
-
 @Getter
 @Setter
-public class ParameterShortDTO {
-    private Long id;
-
+public class EnumeratedStatusAvailableDTO {
     @NotBlank(message = "Parameter is required")
     @Size(max = 100, message = "Name cannot exceed 100 characters")
     private String name;
@@ -23,6 +19,4 @@ public class ParameterShortDTO {
 
     @NotNull(message = "Data Type is required")
     private DataType dataType;    //перечисляемый
-
-    private Map<Integer, String> enumeration;
 }

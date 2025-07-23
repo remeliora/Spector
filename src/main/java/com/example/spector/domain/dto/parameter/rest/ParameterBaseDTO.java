@@ -25,9 +25,6 @@ public class ParameterBaseDTO {
     @Size(max = 10, message = "Metric cannot exceed 50 characters")
     private String metric;
 
-    @NotNull(message = "Is Enumerated Status is required")
-    private Boolean isEnumeratedStatus;
-
     @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 

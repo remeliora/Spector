@@ -38,8 +38,6 @@ public class Parameter {
 
     private Double coefficient;
 
-    private Boolean isEnumeratedStatus;
-
     private String description;
 
     @Enumerated(EnumType.STRING)

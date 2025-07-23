@@ -4,7 +4,7 @@ import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.postgres.DataBaseService;
 import com.example.spector.domain.ParameterData;
 import com.example.spector.domain.ResultValue;
-import com.example.spector.domain.dto.AppSettingDTO;
+import com.example.spector.domain.dto.appsetting.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.threshold.ThresholdDTO;

@@ -4,12 +4,15 @@ import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceParameterOverride;
 import com.example.spector.domain.Parameter;
 import com.example.spector.domain.Threshold;
-import com.example.spector.domain.dto.AppSettingDTO;
+import com.example.spector.domain.dto.appsetting.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.threshold.ThresholdDTO;
 import com.example.spector.mapper.BaseDTOConverter;
-import com.example.spector.repositories.*;
+import com.example.spector.repositories.AppSettingRepository;
+import com.example.spector.repositories.DeviceRepository;
+import com.example.spector.repositories.ParameterRepository;
+import com.example.spector.repositories.ThresholdRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,12 +22,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DataBaseService {  //Файл для работы с репозиториями сущностей БД
-    private final DeviceTypeRepository deviceTypeRepository;
     private final DeviceRepository deviceRepository;
     private final ParameterRepository parameterRepository;
     private final ThresholdRepository thresholdRepository;
     private final AppSettingRepository appSettingRepository;
-    private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
 
     private final BaseDTOConverter baseDTOConverter;
 

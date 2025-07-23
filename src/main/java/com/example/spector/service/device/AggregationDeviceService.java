@@ -1,28 +1,38 @@
 package com.example.spector.service.device;
 
 import com.example.spector.domain.Device;
+import com.example.spector.domain.DeviceParameterOverride;
 import com.example.spector.domain.DeviceType;
+import com.example.spector.domain.Parameter;
+import com.example.spector.domain.dto.device.rest.DeviceByDeviceTypeDTO;
 import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.DeviceTypeRepository;
+import com.example.spector.repositories.ParameterRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AggregationDeviceService {
     private final DeviceRepository deviceRepository;
-    private final DeviceTypeRepository deviceTypeRepository;
     private final BaseDTOConverter baseDTOConverter;
+    private final ParameterRepository parameterRepository;
+    private final DeviceTypeRepository deviceTypeRepository;
+    private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
 
     // Включить / выключить устройство
     public void setEnable(Long deviceId, boolean enabled) {
@@ -33,9 +43,28 @@ public class AggregationDeviceService {
     }
 
     public DeviceDetailDTO getDeviceDetail(Long id) {
-        return deviceRepository.findById(id)
-                .map(device -> baseDTOConverter.toDTO(device, DeviceDetailDTO.class))
+        Device device = deviceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
+
+        DeviceDetailDTO dto = baseDTOConverter.toDTO(device, DeviceDetailDTO.class);
+
+        List<Long> activeParameterIds = deviceParameterOverrideRepository.findByDeviceIdAndIsActiveTrue(id)
+                .stream()
+                .map(override -> override.getParameter().getId())
+                .toList();
+
+        dto.setActiveParametersId(activeParameterIds);
+
+        return dto;
+//        return deviceRepository.findById(id)
+//                .map(device -> baseDTOConverter.toDTO(device, DeviceDetailDTO.class))
+//                .orElseThrow(() -> new EntityNotFoundException("Device not found"));
+    }
+
+    public List<DeviceByDeviceTypeDTO> getDevicesByType(Long deviceTypeId) {
+        return deviceRepository.findDeviceByDeviceTypeId(deviceTypeId).stream()
+                .map(device -> baseDTOConverter.toDTO(device, DeviceByDeviceTypeDTO.class))
+                .toList();
     }
 
     @Transactional
@@ -54,15 +83,57 @@ public class AggregationDeviceService {
     // Создание нового устройства
     @Transactional
     public DeviceDetailDTO createDevice(DeviceCreateDTO createDTO) {
-        Device newDevice = baseDTOConverter.toEntity(createDTO, Device.class);
+//        Device newDevice = baseDTOConverter.toEntity(createDTO, Device.class);
+//        Device savedDevice = deviceRepository.save(newDevice);
+//
+//        return baseDTOConverter.toDTO(savedDevice, DeviceDetailDTO.class);
+        // 1. Проверяем существование типа устройства
+        DeviceType deviceType = deviceTypeRepository.findById(createDTO.getDeviceTypeId())
+                .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
+
+        // 2. Создаем устройство вручную
+        Device newDevice = new Device();
+        newDevice.setName(createDTO.getName());
+        newDevice.setIpAddress(createDTO.getIpAddress());
+        newDevice.setDeviceType(deviceType);
+        newDevice.setDescription(createDTO.getDescription());
+        newDevice.setLocation(createDTO.getLocation());
+        newDevice.setPeriod(createDTO.getPeriod());
+        newDevice.setAlarmType(createDTO.getAlarmType());
+        newDevice.setIsEnable(createDTO.getIsEnable());
+
         Device savedDevice = deviceRepository.save(newDevice);
 
-        return baseDTOConverter.toDTO(savedDevice, DeviceDetailDTO.class);
+        // 3. Получаем все параметры этого типа
+        List<Parameter> parameters = parameterRepository.findParameterByDeviceType(deviceType);
+
+        // 4. Создаем переопределения для всех параметров
+        List<DeviceParameterOverride> overrides = parameters
+                .stream()
+                .map(parameter -> {
+                    DeviceParameterOverride deviceParameterOverride = new DeviceParameterOverride();
+                    deviceParameterOverride.setDevice(savedDevice);
+                    deviceParameterOverride.setParameter(parameter);
+                    deviceParameterOverride.setIsActive(createDTO.getActiveParametersId().contains(parameter.getId()));
+
+                    return deviceParameterOverride;
+                })
+                .toList();
+
+        // 5. Сохраняем все переопределения
+        deviceParameterOverrideRepository.saveAll(overrides);
+
+        // 6. Возвращаем DTO
+        DeviceDetailDTO result = baseDTOConverter.toDTO(savedDevice, DeviceDetailDTO.class);
+        result.setActiveParametersId(createDTO.getActiveParametersId());
+
+        return result;
     }
 
     // Обновление устройства
     @Transactional
     public DeviceDetailDTO updateDevice(Long id, DeviceDetailDTO updateDTO) {
+        // 1. Проверяем существование устройства
         if (!id.equals(updateDTO.getId())) {
             throw new IllegalArgumentException("ID in path and body must match");
         }
@@ -70,25 +141,89 @@ public class AggregationDeviceService {
         Device existingDevice = deviceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
 
-        // Обновляем только разрешенные поля
+        // Запоминаем старый тип устройства
+        DeviceType oldDeviceType = existingDevice.getDeviceType();
+
+        // 2. Обновляем только разрешенные поля
         existingDevice.setName(updateDTO.getName());
         existingDevice.setIpAddress(updateDTO.getIpAddress());
-        // Обновление типа устройства (если изменился)
-        if (!existingDevice.getDeviceType().getId().equals(updateDTO.getDeviceTypeId())) {
-            DeviceType newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
-                    .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " +
-                                                                   updateDTO.getDeviceTypeId()));
-            existingDevice.setDeviceType(newDeviceType);
-        }
         existingDevice.setDescription(updateDTO.getDescription());
         existingDevice.setLocation(updateDTO.getLocation());
         existingDevice.setPeriod(updateDTO.getPeriod());
         existingDevice.setAlarmType(updateDTO.getAlarmType());
         existingDevice.setIsEnable(updateDTO.getIsEnable());
+//        if (!existingDevice.getDeviceType().getId().equals(updateDTO.getDeviceTypeId())) {
+//            DeviceType newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
+//                    .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " +
+//                                                                   updateDTO.getDeviceTypeId()));
+//            existingDevice.setDeviceType(newDeviceType);
+//        }
+        // Обновление типа устройства (если изменился)
+        DeviceType newDeviceType = oldDeviceType;
+        if (!oldDeviceType.getId().equals(updateDTO.getDeviceTypeId())) {
+            newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
+                    .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
+            existingDevice.setDeviceType(newDeviceType);
+        }
 
         Device updatedDevice = deviceRepository.save(existingDevice);
 
-        return baseDTOConverter.toDTO(updatedDevice, DeviceDetailDTO.class);
+        // 3. Получаем существующие переопределения
+        List<DeviceParameterOverride> existingOverrides = deviceParameterOverrideRepository.findByDeviceId(id);
+
+        // 4. Создаем или обновляем переопределения
+        Map<Long, DeviceParameterOverride> existingOverridesMap = existingOverrides
+                .stream()
+                .collect(Collectors.toMap(
+                        override -> override.getParameter().getId(),
+                        Function.identity()
+                ));
+
+        // 5. Получаем все параметры для нового типа устройства
+        List<Parameter> parameters = parameterRepository.findParameterByDeviceType(newDeviceType);
+
+        List<DeviceParameterOverride> updatedOverrides = new ArrayList<>();
+
+        for (Parameter parameter : parameters) {
+            DeviceParameterOverride override;
+            if (existingOverridesMap.containsKey(parameter.getId())) {
+                // Обновляем существующее переопределение
+                override = existingOverridesMap.get(parameter.getId());
+            } else {
+                override = new DeviceParameterOverride();
+                override.setDevice(updatedDevice);
+                override.setParameter(parameter);
+            }
+
+            // Устанавливаем активность
+            override.setIsActive(updateDTO.getActiveParametersId().contains(parameter.getId()));
+            updatedOverrides.add(override);
+        }
+
+        // 6. Сохраняем обновленные переопределения
+        deviceParameterOverrideRepository.saveAll(updatedOverrides);
+
+        // Если тип устройства изменился, удаляем старые переопределения
+        if (!oldDeviceType.getId().equals(newDeviceType.getId())) {
+            List<Long> oldParametersId = parameters
+                    .stream()
+                    .map(Parameter::getId)
+                    .toList();
+
+            List<DeviceParameterOverride> obsoleteOverrides = existingOverrides
+                    .stream()
+                    .filter(override -> !oldParametersId.contains(override.getParameter().getId()))
+                    .toList();
+
+            deviceParameterOverrideRepository.deleteAll(obsoleteOverrides);
+        }
+
+        // 7. Возвращаем DTO
+        DeviceDetailDTO result = baseDTOConverter.toDTO(updatedDevice, DeviceDetailDTO.class);
+        result.setActiveParametersId(updateDTO.getActiveParametersId());
+
+//        return baseDTOConverter.toDTO(updatedDevice, DeviceDetailDTO.class);
+        return result;
     }
 
     @Transactional

@@ -9,13 +9,13 @@ import lombok.Setter;
 public class ThresholdDetailDTO {
     private Long id;
 
-    @NotNull(message = "Low Value is required")
+//    @NotNull(message = "Low Value is required")
     private Double lowValue;
 
 //    @NotNull(message = "Match Exact is required")
     private String matchExact;
 
-    @NotNull(message = "High Value is required")
+//    @NotNull(message = "High Value is required")
     private Double highValue;
 
     @NotNull(message = "Is Enable Status is required")

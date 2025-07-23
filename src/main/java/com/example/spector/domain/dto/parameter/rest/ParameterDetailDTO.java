@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class ParameterDetailDTO {
@@ -22,19 +24,18 @@ public class ParameterDetailDTO {
     @Size(max = 10, message = "Metric cannot exceed 50 characters")
     private String metric;
 
-    @NotNull(message = "Additive is required")
+//    @NotNull(message = "Additive is required")
     private Double additive;
 
-    @NotNull(message = "Coefficient is required")
-    @DecimalMin(value = "0.0", message = "Coefficient cannot be negative")
+//    @NotNull(message = "Coefficient is required")
+//    @DecimalMin(value = "0.0", message = "Coefficient cannot be negative")
     private Double coefficient;
-
-    @NotNull(message = "Is Enumerated Status is required")
-    private Boolean isEnumeratedStatus; //перечисляемый
 
     @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 
     @NotNull(message = "Data Type is required")
-    private DataType dataType;    //перечисляемый
+    private DataType dataType;
+
+    private List<Long> activeDevicesId;
 }

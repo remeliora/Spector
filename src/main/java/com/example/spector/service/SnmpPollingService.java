@@ -6,6 +6,7 @@ import com.example.spector.modules.checker.db.DBChecker;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import com.example.spector.script.SnmpPollingGetAsync;
+import com.example.spector.service.appsetting.AppSettingService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;

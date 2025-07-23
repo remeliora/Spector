@@ -1,5 +1,6 @@
 package com.example.spector.controller.rest;
 
+import com.example.spector.domain.dto.enumeration.EnumeratedStatusAvailableDTO;
 import com.example.spector.domain.dto.enumeration.EnumeratedStatusBaseDTO;
 import com.example.spector.domain.dto.enumeration.EnumeratedStatusCreateDTO;
 import com.example.spector.domain.dto.enumeration.EnumeratedStatusDetailDTO;
@@ -35,6 +36,15 @@ public class EnumeratedStatusController {
     public EnumeratedStatusDetailDTO getEnumeratedStatusDetail(
             @PathVariable String collectionName) {
         return aggregationEnumeratedStatusService.getEnumeratedStatusesDetail(collectionName);
+    }
+
+    /**
+     * GET /api/main/enumerations/available-parameters
+     */
+    // Получение списка доступных параметров (dataType = ENUMERATED)
+    @GetMapping("/available-parameters")
+    public List<EnumeratedStatusAvailableDTO> getAvailableParameters() {
+        return aggregationEnumeratedStatusService.getAvailableParameters();
     }
 
     // Создание словаря

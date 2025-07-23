@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class DeviceDetailDTO {
@@ -38,4 +40,6 @@ public class DeviceDetailDTO {
 
     @NotNull(message = "Is Enable is required")
     private Boolean isEnable;
+
+    private List<Long> activeParametersId;
 }

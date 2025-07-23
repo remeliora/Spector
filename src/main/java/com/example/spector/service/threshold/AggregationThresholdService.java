@@ -1,5 +1,6 @@
 package com.example.spector.service.threshold;
 
+import com.example.spector.database.mongodb.EnumeratedStatusService;
 import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceType;
 import com.example.spector.domain.Parameter;
@@ -8,6 +9,7 @@ import com.example.spector.domain.dto.parameter.rest.ParameterShortDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdBaseDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdCreateDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdDetailDTO;
+import com.example.spector.domain.enums.DataType;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.ParameterRepository;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +32,7 @@ public class AggregationThresholdService {
     private final BaseDTOConverter baseDTOConverter;
     private final DeviceRepository deviceRepository;
     private final ParameterRepository parameterRepository;
+    private final EnumeratedStatusService enumeratedStatusService;
 
     // Получение списка с фильтрацией
     public List<ThresholdBaseDTO> getThresholdByDevice(Long deviceId) {
@@ -44,7 +48,7 @@ public class AggregationThresholdService {
     public ThresholdDetailDTO getThresholdDetails(Long deviceId, Long thresholdId) {
         Threshold threshold = thresholdRepository.findThresholdByIdAndDeviceId(thresholdId, deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Threshold not found with id: " + thresholdId +
-                                                                " for device type: " + deviceId));
+                                                               " for device type: " + deviceId));
 
         return baseDTOConverter.toDTO(threshold, ThresholdDetailDTO.class);
     }
@@ -77,7 +81,24 @@ public class AggregationThresholdService {
         return allParameters.stream()
                 .filter(parameter -> !usedParameterIds.contains(parameter.getId()))
                 .sorted(Comparator.comparing(Parameter::getName))
-                .map(parameter -> baseDTOConverter.toDTO(parameter, ParameterShortDTO.class))
+                .map(parameter -> {
+                    ParameterShortDTO dto = new ParameterShortDTO();
+                    dto.setId(parameter.getId());
+                    dto.setName(parameter.getName());
+                    dto.setDataType(parameter.getDataType());
+
+                    if (parameter.getDataType() == DataType.ENUMERATED) {
+                        try {
+                            dto.setEnumeration(
+                                    enumeratedStatusService.getStatusName(parameter.getName())
+                            );
+                        } catch (Exception e) {
+                            System.out.println("Failed to load statuses for: " + parameter.getName() + e);
+                        }
+                    }
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -88,6 +109,31 @@ public class AggregationThresholdService {
     // Создание нового порога
     @Transactional
     public ThresholdDetailDTO createThreshold(Long deviceId, ThresholdCreateDTO createDTO) {
+        Parameter parameter = parameterRepository.findById(createDTO.getParameterId())
+                .orElseThrow(() -> new EntityNotFoundException("Parameter not found"));
+
+        // Для ENUM параметров проверяем matchExact
+        if (parameter.getDataType() == DataType.ENUMERATED) {
+            createDTO.setLowValue(null);
+            createDTO.setHighValue(null);
+
+            if (createDTO.getMatchExact() == null) {
+                throw new IllegalArgumentException("Status value required for ENUM parameter");
+            }
+
+            // Дополнительная проверка, что статус существует
+            Map<Integer, String> statuses = enumeratedStatusService.getStatusName(parameter.getName());
+            // Проверяем, существует ли введённое название статуса
+            boolean statusExists = statuses.values().stream()
+                    .anyMatch(status -> status.equalsIgnoreCase(createDTO.getMatchExact()));
+
+            if (!statusExists) {
+                throw new IllegalArgumentException("Неверное название статуса: " + createDTO.getMatchExact());
+            }
+        } else {
+            // Для не-ENUM параметров обнуляем
+            createDTO.setMatchExact(null);
+        }
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " + deviceId));
 
@@ -96,20 +142,55 @@ public class AggregationThresholdService {
 
         Threshold savedThreshold = thresholdRepository.save(newThreshold);
 
-        return  baseDTOConverter.toDTO(savedThreshold, ThresholdDetailDTO.class);
+        return baseDTOConverter.toDTO(savedThreshold, ThresholdDetailDTO.class);
     }
 
     // Обновление порога
     @Transactional
     public ThresholdDetailDTO updateThreshold(Long deviceId, Long thresholdId, ThresholdDetailDTO updateDTO) {
+        // 1. Проверка совпадения ID
         if (!thresholdId.equals(updateDTO.getId())) {
             throw new IllegalArgumentException("ID in path and body must match");
         }
 
+        // 2. Поиск существующего порога
         Threshold existingThreshold = thresholdRepository.findThresholdByIdAndDeviceId(thresholdId, deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Threshold not found with id: " + thresholdId +
                                                                " for device: " + deviceId));
 
+        // 3. Валидация для ENUM-параметров
+        if (existingThreshold.getParameter().getDataType() == DataType.ENUMERATED) {
+            updateDTO.setLowValue(null);
+            updateDTO.setHighValue(null);
+
+            if (updateDTO.getMatchExact() == null) {
+                throw new IllegalArgumentException("Status value required for ENUM parameter");
+            }
+
+            Map<Integer, String> statuses = enumeratedStatusService.getStatusName(
+                    existingThreshold.getParameter().getName());
+
+            boolean statusExists = statuses.values().stream()
+                    .anyMatch(status -> status.equalsIgnoreCase(updateDTO.getMatchExact()));
+
+            if (!statusExists) {
+                throw new IllegalArgumentException("Неверное название статуса: " + updateDTO.getMatchExact());
+            }
+        }
+        // 4. Валидация для числовых параметров
+        else {
+            updateDTO.setMatchExact(null);
+
+            if (updateDTO.getLowValue() == null || updateDTO.getHighValue() == null) {
+                throw new IllegalArgumentException("Both low and high values are required for numeric parameter");
+            }
+
+            if (updateDTO.getLowValue() > updateDTO.getHighValue()) {
+                throw new IllegalArgumentException("Low value must be less than or equal to high value");
+            }
+        }
+
+        // 5. Обновление полей
         existingThreshold.setLowValue(updateDTO.getLowValue());
         existingThreshold.setMatchExact(updateDTO.getMatchExact());
         existingThreshold.setHighValue(updateDTO.getHighValue());
@@ -123,7 +204,7 @@ public class AggregationThresholdService {
 
         Threshold updatedThreshold = thresholdRepository.save(existingThreshold);
 
-        return  baseDTOConverter.toDTO(updatedThreshold, ThresholdDetailDTO.class);
+        return baseDTOConverter.toDTO(updatedThreshold, ThresholdDetailDTO.class);
     }
 
     // Удаление порога

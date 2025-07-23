@@ -1,9 +1,13 @@
 package com.example.spector.controller.rest;
 
+import com.example.spector.domain.dto.device.rest.DeviceByDeviceTypeDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeBaseDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeCreateDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeDetailDTO;
+import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
+import com.example.spector.service.device.AggregationDeviceService;
 import com.example.spector.service.devicetype.AggregationDeviceTypeService;
+import com.example.spector.service.parameter.AggregationParameterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +22,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class DeviceTypeController {
     private final AggregationDeviceTypeService aggregationDeviceTypeService;
+    private final AggregationDeviceService aggregationDeviceService;
+    private final AggregationParameterService aggregationParameterService;
 
     /**
      * GET /api/main/device-types
@@ -38,6 +44,25 @@ public class DeviceTypeController {
     public DeviceTypeDetailDTO getDeviceTypeDetail(@PathVariable Long deviceTypeId) {
         return aggregationDeviceTypeService.getDeviceTypeDetail(deviceTypeId);
     }
+
+    /**
+     * GET /api/main/device-types/{deviceTypeId}/devices-list
+     */
+    @GetMapping("/{deviceTypeId}/devices-list")
+    // Получение списка устройств по типу
+    public List<DeviceByDeviceTypeDTO> getDevicesByType(@PathVariable Long deviceTypeId) {
+        return aggregationDeviceService.getDevicesByType(deviceTypeId);
+    }
+
+    /**
+     * GET /api/main/device-types/{deviceTypeId}/parameters-list
+     */
+    @GetMapping("/{deviceTypeId}/parameters-list")
+    // Получение списка устройств по типу
+    public List<ParameterByDeviceTypeDTO> getParametersByType(@PathVariable Long deviceTypeId) {
+        return aggregationParameterService.getParametersByType(deviceTypeId);
+    }
+
 
     // Создание типа устройства
     @PostMapping
