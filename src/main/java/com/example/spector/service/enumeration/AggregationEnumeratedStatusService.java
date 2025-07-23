@@ -147,6 +147,7 @@ public class AggregationEnumeratedStatusService {
 
     }
 
+    // Удаление словаря
     @Transactional
     public void deleteEnumeratedStatus(String collectionName) {
         // Проверяем существование коллекции

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ThresholdDTOConverter implements ConverterDTO<Threshold, ThresholdDTO> {
     private final ModelMapper modelMapper;
+
     @Override
     public ThresholdDTO convertToDTO(Threshold threshold) {
         return modelMapper.map(threshold, ThresholdDTO.class);

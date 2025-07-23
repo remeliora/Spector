@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DeviceTypeDTOConverter implements ConverterDTO<DeviceType, DeviceTypeDTO> {
     private final ModelMapper modelMapper;
+
     @Override
     public DeviceTypeDTO convertToDTO(DeviceType deviceType) {
         return modelMapper.map(deviceType, DeviceTypeDTO.class);

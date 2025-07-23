@@ -18,5 +18,5 @@ public class EnumeratedStatusAvailableDTO {
     private String description;
 
     @NotNull(message = "Data Type is required")
-    private DataType dataType;    //перечисляемый
+    private DataType dataType;
 }

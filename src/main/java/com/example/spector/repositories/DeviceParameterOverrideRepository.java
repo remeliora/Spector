@@ -9,7 +9,10 @@ import java.util.List;
 @Repository
 public interface DeviceParameterOverrideRepository extends JpaRepository<DeviceParameterOverride, Long> {
     List<DeviceParameterOverride> findByParameterId(Long parameterId);
+
     List<DeviceParameterOverride> findByParameterIdAndIsActiveTrue(Long parameterId);
+
     List<DeviceParameterOverride> findByDeviceId(Long deviceId);
+
     List<DeviceParameterOverride> findByDeviceIdAndIsActiveTrue(Long deviceId);
 }

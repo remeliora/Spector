@@ -31,7 +31,7 @@ public class DeviceDataService {
         if (!deviceDataMongoTemplate.collectionExists(deviceName)) {
             deviceDataMongoTemplate.createCollection(deviceName);
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "MongoDB: хранилище " + deviceName  + " создано"));
+                    "MongoDB: хранилище " + deviceName + " создано"));
         }
     }
 

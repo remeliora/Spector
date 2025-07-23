@@ -1,7 +1,10 @@
 package com.example.spector.domain.dto.parameter.rest;
 
 import com.example.spector.domain.enums.DataType;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,11 +27,11 @@ public class ParameterDetailDTO {
     @Size(max = 10, message = "Metric cannot exceed 50 characters")
     private String metric;
 
-//    @NotNull(message = "Additive is required")
+    //    @NotNull(message = "Additive is required")
     private Double additive;
 
-//    @NotNull(message = "Coefficient is required")
-//    @DecimalMin(value = "0.0", message = "Coefficient cannot be negative")
+    //    @NotNull(message = "Coefficient is required")
+    //    @DecimalMin(value = "0.0", message = "Coefficient cannot be negative")
     private Double coefficient;
 
     @Size(max = 500, message = "Description cannot exceed 500 characters")

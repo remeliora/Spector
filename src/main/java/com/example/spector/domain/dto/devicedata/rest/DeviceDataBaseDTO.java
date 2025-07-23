@@ -13,5 +13,5 @@ public class DeviceDataBaseDTO {
     private Boolean isEnable;
     private String location;
     private String status;
-//    private LocalDateTime lastPollingTime;
+    //    private LocalDateTime lastPollingTime;
 }

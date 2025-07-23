@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -130,7 +129,7 @@ public class AggregationParameterService {
     // Обновление параметра
     @Transactional
     public ParameterDetailDTO updateParameter(Long deviceTypeId, Long parameterId,
-                                               ParameterDetailDTO updateDTO) {
+                                              ParameterDetailDTO updateDTO) {
         // 1. Проверяем существование параметра
         if (!parameterId.equals(updateDTO.getId())) {
             throw new IllegalArgumentException("ID in path and body must match");
