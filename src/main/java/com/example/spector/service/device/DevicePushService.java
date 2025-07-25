@@ -11,28 +11,37 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class DevicePushService {
-    private final AggregationDeviceDataService aggregationDeviceDataService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AggregationDeviceDataService aggregationDeviceDataService;
+    private Map<Long, DeviceDataBaseDTO> lastStates = new ConcurrentHashMap<>();
+    private final Set<Long> activeDetailSubscriptions = ConcurrentHashMap.newKeySet();
 
     /**
      * Каждые 5 секунт пушим summary-обновления всем подписчикам.
      */
-    @Scheduled(fixedDelayString = "${monitoring.push.delay:5000}")
+    @Scheduled(fixedDelay = 5000)
     public void pushAllSummaries() {
         List<DeviceDataBaseDTO> summaries = aggregationDeviceDataService.getDeviceDataSummary(Optional.empty());
-        for (DeviceDataBaseDTO s : summaries) {
-            DeviceSummaryMessage msg = new DeviceSummaryMessage();
-            msg.setDeviceId(s.getDeviceId());
-            msg.setStatus(s.getStatus());
-            msg.setIsEnable(s.getIsEnable());
-            messagingTemplate.convertAndSend("/topic/monitoring/summary", msg);
-//            System.out.println("PUSH summary: " + msg);
-
+        for (DeviceDataBaseDTO summary : summaries) {
+            DeviceDataBaseDTO lastState = lastStates.get(summary.getDeviceId());
+            if (lastState == null || !lastState.getStatus().equals(summary.getStatus())
+                || !lastState.getIsEnable().equals(summary.getIsEnable())) {
+                DeviceSummaryMessage msg = new DeviceSummaryMessage();
+                msg.setDeviceId(summary.getDeviceId());
+                msg.setStatus(summary.getStatus());
+                msg.setIsEnable(summary.getIsEnable());
+                messagingTemplate.convertAndSend("/topic/monitoring/summary", msg);
+                lastStates.put(summary.getDeviceId(), summary);
+//                System.out.println("Pushed update for device " + summary.getDeviceId() + ": "+ msg);
+            }
         }
     }
 
@@ -40,11 +49,38 @@ public class DevicePushService {
      * Пушим детали конкретного устройства.
      * Можно вызывать из контроллера WebSocket или на событие фронтенда.
      */
+    // Обновление деталей для активных устройств
+    @Scheduled(fixedDelay = 1000)
+    public void pushActiveDeviceDetails() {
+        activeDetailSubscriptions.forEach(this::pushDeviceDetails);
+    }
+
+    private void sendSummary(DeviceDataBaseDTO summary) {
+        DeviceSummaryMessage msg = new DeviceSummaryMessage();
+        msg.setDeviceId(summary.getDeviceId());
+        msg.setStatus(summary.getStatus());
+        msg.setIsEnable(summary.getIsEnable());
+        messagingTemplate.convertAndSend("/topic/monitoring/summary", msg);
+        lastStates.put(summary.getDeviceId(), summary);
+    }
+
     public void pushDeviceDetails(Long deviceId) {
-        DeviceDataDetailDTO detail = aggregationDeviceDataService.getDeviceDataDetails(deviceId);
-        DeviceDetailMessage msg = new DeviceDetailMessage();
-        msg.setDeviceId(deviceId);
-        msg.setParameters(detail.getParameters());
-        messagingTemplate.convertAndSend("/topic/monitoring/" + deviceId + "/details", msg);
+        try {
+            DeviceDataDetailDTO detail = aggregationDeviceDataService.getDeviceDataDetails(deviceId);
+            DeviceDetailMessage msg = new DeviceDetailMessage();
+            msg.setDeviceId(deviceId);
+            msg.setParameters(detail.getParameters());
+            messagingTemplate.convertAndSend("/topic/monitoring/" + deviceId + "/details", msg);
+        } catch (Exception e) {
+            System.out.println("Failed to push details for device " + deviceId + e);
+        }
+    }
+
+    public void subscribeToDetails(Long deviceId) {
+        activeDetailSubscriptions.add(deviceId);
+    }
+
+    public void unsubscribeFromDetails(Long deviceId) {
+        activeDetailSubscriptions.remove(deviceId);
     }
 }

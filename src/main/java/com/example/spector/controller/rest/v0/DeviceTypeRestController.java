@@ -1,18 +1,18 @@
-package com.example.spector.controller.rest.old;
+package com.example.spector.controller.rest.v0;
 
 import com.example.spector.domain.DeviceType;
 import com.example.spector.service.devicetype.DeviceTypeService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Hidden
 @RestController
 @RequestMapping("${application.endpoint.root}")
 @RequiredArgsConstructor
 public class DeviceTypeRestController {
-    @Autowired
     private DeviceTypeService deviceTypeService;
 
     @PostMapping("${application.endpoint.device-type}")

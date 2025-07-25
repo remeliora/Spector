@@ -1,4 +1,4 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.v1;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;

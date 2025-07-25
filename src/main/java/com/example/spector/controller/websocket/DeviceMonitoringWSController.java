@@ -16,4 +16,20 @@ public class DeviceMonitoringWSController {
     public void onDetailsRequest(@DestinationVariable Long id) {
         devicePushService.pushDeviceDetails(id);
     }
+
+    @MessageMapping("/devices/{id}/details/subscribe")
+    public void subscribeToDetails(@DestinationVariable Long id) {
+        devicePushService.subscribeToDetails(id);
+        devicePushService.pushDeviceDetails(id); // Первый запрос
+    }
+
+    @MessageMapping("/devices/{id}/details/unsubscribe")
+    public void unsubscribeFromDetails(@DestinationVariable Long id) {
+        devicePushService.unsubscribeFromDetails(id);
+    }
+
+    @MessageMapping("/devices/summary/request")
+    public void requestAllSummaries() {
+        devicePushService.pushAllSummaries(); // Принудительная отправка
+    }
 }

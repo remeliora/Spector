@@ -10,6 +10,7 @@ import com.example.spector.mapper.DeviceDTOConverter;
 import com.example.spector.mapper.ParameterDTOConverter;
 import com.example.spector.database.mongodb.DeviceDataService;
 import com.example.spector.service.device.DeviceService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Hidden
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/devices-data")

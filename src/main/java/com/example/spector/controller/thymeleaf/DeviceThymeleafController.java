@@ -8,6 +8,7 @@ import com.example.spector.mapper.DeviceDTOConverter;
 import com.example.spector.mapper.DeviceTypeDTOConverter;
 import com.example.spector.service.device.DeviceService;
 import com.example.spector.service.devicetype.DeviceTypeService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Hidden
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/devices")

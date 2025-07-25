@@ -1,4 +1,4 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.v1;
 
 import com.example.spector.domain.dto.parameter.rest.ParameterShortDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdBaseDTO;
@@ -14,7 +14,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/main/devices/{deviceId}/thresholds")
+@RequestMapping("/api/v1/main/devices/{deviceId}/thresholds")
 @RequiredArgsConstructor
 public class ThresholdController {
     private final AggregationThresholdService aggregationThresholdService;

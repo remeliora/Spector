@@ -13,11 +13,19 @@ import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.DeviceTypeRepository;
 import com.example.spector.repositories.ParameterRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +38,9 @@ import java.util.stream.Collectors;
 public class AggregationDeviceService {
     private final DeviceRepository deviceRepository;
     private final BaseDTOConverter baseDTOConverter;
+    private final ObjectMapper objectMapper= new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .enable(SerializationFeature.INDENT_OUTPUT);
     private final ParameterRepository parameterRepository;
     private final DeviceTypeRepository deviceTypeRepository;
     private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
@@ -40,6 +51,31 @@ public class AggregationDeviceService {
                 .orElseThrow(() -> new EntityNotFoundException("Устройство не найдено: " + deviceId));
         device.setIsEnable(enabled);
         deviceRepository.save(device);
+        updateJsonStatus(device, enabled);
+    }
+
+    private void updateJsonStatus(Device device, boolean enabled) {
+        Path jsonPath = Paths.get("data/JSON/devices", device.getName() + ".json");
+        if (!Files.exists(jsonPath)) return;
+
+        try {
+            // 1. Читаем JSON как Map
+            Map<String, Object> jsonData = objectMapper.readValue(
+                    jsonPath.toFile(),
+                    new TypeReference<>() {}
+            );
+
+            // 2. Меняем только нужные поля
+            jsonData.put("status", enabled ? "LOADING" : "DISABLED");
+            if (!enabled) {
+                jsonData.put("parameters", List.of());
+            }
+
+            // 3. Записываем обратно
+            objectMapper.writeValue(jsonPath.toFile(), jsonData);
+        } catch (IOException e) {
+            System.out.println("Ошибка обновления статуса в JSON для " + device.getName() + ": " + e.getMessage());
+        }
     }
 
     public DeviceDetailDTO getDeviceDetail(Long id) {

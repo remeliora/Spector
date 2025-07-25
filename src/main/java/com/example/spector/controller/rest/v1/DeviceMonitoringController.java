@@ -1,4 +1,4 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.v1;
 
 import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
@@ -16,14 +16,14 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/main/devices")
+@RequestMapping("/api/v1/main/devices")
 @RequiredArgsConstructor
 public class DeviceMonitoringController {
     private final AggregationDeviceDataService aggregationDeviceDataService;
     private final AggregationDeviceService aggregationDeviceService;
 
     /**
-     * GET /api/main/devices/monitoring
+     * GET /api/v1/main/devices/monitoring
      */
     // Получение списка с фильтрацией
     @GetMapping("/monitoring")
@@ -34,7 +34,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * GET /api/main/devices/monitoring/{deviceId}
+     * GET /api/v1/main/devices/monitoring/{deviceId}
      */
     // Получение деталей устройства с данными в реальном времени
     @GetMapping("/monitoring/{deviceId}")
@@ -43,7 +43,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * GET /api/main/devices/available-device-types
+     * GET /api/v1/main/devices/available-device-types
      */
     // Получение списка всех типов устройств для устройства
     @GetMapping("/available-device-types")
@@ -52,7 +52,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * PUT /api/main/devices/{deviceId}/enable
+     * PUT /api/v1/main/devices/{deviceId}/enable
      */
     // Включение устройства
     @PutMapping("/{deviceId}/enable")
@@ -62,7 +62,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * PUT /api/main/devices/{deviceId}/disable
+     * PUT /api/v1/main/devices/{deviceId}/disable
      */
     @PutMapping("/{deviceId}/disable")
     // Выключение устройства
@@ -72,7 +72,7 @@ public class DeviceMonitoringController {
     }
 
     /**
-     * GET /api/main/devices/{deviceId}
+     * GET /api/v1/main/devices/{deviceId}
      */
     // Получение деталей устройства
     @GetMapping("/{deviceId}")

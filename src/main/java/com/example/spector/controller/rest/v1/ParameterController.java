@@ -1,4 +1,4 @@
-package com.example.spector.controller.rest;
+package com.example.spector.controller.rest.v1;
 
 import com.example.spector.domain.dto.parameter.rest.ParameterBaseDTO;
 import com.example.spector.domain.dto.parameter.rest.ParameterCreateDTO;
@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/main/device-types/{deviceTypeId}/parameters")
+@RequestMapping("/api/v1/main/device-types/{deviceTypeId}/parameters")
 @RequiredArgsConstructor
 public class ParameterController {
     private final AggregationParameterService aggregationParameterService;
