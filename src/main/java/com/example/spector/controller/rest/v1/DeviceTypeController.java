@@ -51,6 +51,11 @@ public class DeviceTypeController {
         return aggregationDeviceTypeService.getDeviceTypes(Optional.ofNullable(className));
     }
 
+    @GetMapping("/unique-class-names")
+    public List<String> getUniqueClassNames() {
+        return aggregationDeviceTypeService.getUniqueClassNames();
+    }
+
     /**
      * GET /api/main/device-types/{deviceTypeId}
      */

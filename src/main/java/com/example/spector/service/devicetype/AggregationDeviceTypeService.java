@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,16 @@ public class AggregationDeviceTypeService {
         return deviceTypeRepository.findById(id)
                 .map(deviceType -> baseDTOConverter.toDTO(deviceType, DeviceTypeDetailDTO.class))
                 .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
+    }
+
+    public List<String> getUniqueClassNames() {
+        return deviceTypeRepository.findAll()
+                .stream()
+                .map(DeviceType::getClassName)
+                .filter(className -> className != null && !className.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     //================

@@ -33,6 +33,11 @@ public class DeviceMonitoringController {
         return aggregationDeviceDataService.getDeviceDataSummary(Optional.ofNullable(location));
     }
 
+    @GetMapping("/unique-locations")
+    public List<String> getUniqueLocations() {
+        return aggregationDeviceService.getUniqueLocations();
+    }
+
     /**
      * GET /api/v1/main/devices/monitoring/{deviceId}
      */

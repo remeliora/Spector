@@ -78,6 +78,16 @@ public class AggregationDeviceService {
         }
     }
 
+    public List<String> getUniqueLocations() {
+        return deviceRepository.findAll()
+                .stream()
+                .map(Device::getLocation)
+                .filter(location -> location != null && !location.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
     public DeviceDetailDTO getDeviceDetail(Long id) {
         Device device = deviceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
