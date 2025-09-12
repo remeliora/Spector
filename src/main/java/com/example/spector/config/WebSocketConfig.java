@@ -14,7 +14,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry
                 .addEndpoint("/ws-monitoring")
                 .setAllowedOrigins("*")
-                /*.withSockJS()*/;
+                .withSockJS();
     }
 
     @Override

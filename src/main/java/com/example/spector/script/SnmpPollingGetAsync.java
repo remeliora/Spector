@@ -65,7 +65,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                 "Кол-во устройств: " + deviceDTOList.size()));
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
                 "Ожидание завершения всех задач опроса..."));
-//        deviceDTOList.forEach(this::pollDeviceAsync);
         deviceDTOList.forEach(deviceDTO -> pollDeviceAsync(deviceDTO, appSettingDTO));
         // Ожидание завершения всех задач
         eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
@@ -89,7 +88,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                     "Опрос занял " + (endTime - startTime) + " мс."));
             MDC.clear();
         }
-
         return CompletableFuture.completedFuture(null);
     }
 
@@ -158,8 +156,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
     }
 
     private Map<String, Object> snmpPoll(DeviceDTO deviceDTO, AppSettingDTO appSettingDTO) {
-        // Используем синхронизированный список для потокобезопасного добавления данных
-        List<ParameterData> parameterDataList = Collections.synchronizedList(new ArrayList<>());
+        List<ParameterData> parameterDataList = new ArrayList<>();
 
         // Загружаем полный объект DeviceTypeDTO с параметрами
         List<ParameterDTO> parameterDTOList = dataBaseService.getActiveParametersForDevice(deviceDTO.getId());
@@ -170,42 +167,32 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
         try (Snmp snmp = new Snmp(new DefaultUdpTransportMapping())) {
             snmp.listen();
 
-            List<CompletableFuture<Void>> futureParameterList = parameterDTOList.stream()
-                    .map(parameterDTO -> CompletableFuture.runAsync(() -> {
-                        try {
-                            pollParameterAsync(deviceDTO, parameterDTO, /*snmpData*/ parameterDataList, snmp, appSettingDTO);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                                    deviceDTO.getName() + ": " + parameterDTO.getName() +
-                                    " - ошибка опроса: " + e));
-                            eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                                    parameterDTO.getName() + " - ошибка опроса: " + e));
-                        }
-                    }))
-                    .toList();
+            for (ParameterDTO parameterDTO : parameterDTOList) {
+                try {
+                    // Синхронный опрос одного параметра
+                    pollParameter(deviceDTO, parameterDTO, parameterDataList, snmp, appSettingDTO);
+                } catch (Exception e) {
+                    // В случае ошибки создаем запись с соответствующим статусом
+                    ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
+                    parameterData.setValue(null);
+                    parameterData.setStatus("ERROR");
+                    parameterDataList.add(parameterData);
+                }
+            }
 
-            CompletableFuture<Void> allOf = CompletableFuture
-                    .allOf(futureParameterList.toArray(new CompletableFuture[0]));
-
-            allOf.get();
-        } catch (IOException | InterruptedException | ExecutionException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     deviceDTO.getName() + ": ошибка во время опроса - " + e));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                     "Ошибка во время опроса: " + e));
-            Thread.currentThread().interrupt(); // Сбрасываем флаг прерывания
         }
 
         return Collections.singletonMap("parameters", parameterDataList);
     }
 
-    @Async("taskExecutor")
-    public CompletableFuture<Void> pollParameterAsync(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
-                                                      List<ParameterData> parameterDataList, Snmp snmp,
-                                                      AppSettingDTO appSettingDTO) {
-        MDC.put("deviceName", deviceDTO.getName());
+    private void pollParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO,
+                               List<ParameterData> parameterDataList, Snmp snmp, AppSettingDTO appSettingDTO) {
         try {
             OID oid = new OID(parameterDTO.getAddress());
             PDU pdu = new PDU();
@@ -228,7 +215,7 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
                 parameterData.setStatus("NO_DATA");
                 parameterDataList.add(parameterData);
 
-                return CompletableFuture.completedFuture(null);
+                return;
             }
 
             Variable variable = result.getVariable();
@@ -253,16 +240,6 @@ public class SnmpPollingGetAsync {   // Класс скрипта опроса �
             eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
                     appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                     deviceDTO.getName() + ": " + parameterDTO.getDescription() + " - Данные повреждены"));
-
-            // В случае ошибки создаем запись с соответствующим статусом
-            ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
-            parameterData.setValue(null);
-            parameterData.setStatus("ERROR");
-            parameterDataList.add(parameterData);
-        } finally {
-            MDC.clear();  // Очищаем MDC после завершения
         }
-
-        return CompletableFuture.completedFuture(null);
     }
 }

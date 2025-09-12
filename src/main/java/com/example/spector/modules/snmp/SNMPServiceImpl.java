@@ -65,23 +65,23 @@ public class SNMPServiceImpl implements SNMPService {
                     PDU response = responseEvent.getResponse();
 
                     if (response != null && response.getErrorStatus() == PDU.noError) {
-//                        finalResult.setVariable(response.getVariableBindings().stream().findFirst().get().getVariable());
-                        Optional<? extends VariableBinding> firstBinding = response.getVariableBindings().stream().findFirst();
-                        firstBinding.ifPresent(variableBinding -> finalResult.setVariable(variableBinding.getVariable()));
+                        Optional<? extends VariableBinding> firstBinding = response.getVariableBindings()
+                                .stream().findFirst();
+                        firstBinding.ifPresent(variableBinding ->
+                                finalResult.setVariable(variableBinding.getVariable()));
                     }
                     futureResult.complete(finalResult);
                 }
             };
 
             snmp.send(pdu, target, null, listener);
-            result = futureResult.get(10, TimeUnit.SECONDS);
+            result = futureResult.get(15, TimeUnit.SECONDS);
 
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "SNMP: ошибка во время опроса оборудования " + deviceIp + ": " + e.getMessage()));
         } catch (TimeoutException e) {
-//            e.printStackTrace();
             System.out.println("SNMP: таймаут оборудования " + deviceIp + " превышен");
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "SNMP: таймаут оборудования " + deviceIp + " превышен"));
