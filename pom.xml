@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.1.5</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.example</groupId>
     <artifactId>Spector</artifactId>
@@ -96,11 +96,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!--		<dependency>-->
-        <!--			<groupId>org.springframework.security</groupId>-->
-        <!--			<artifactId>spring-security-test</artifactId>-->
-        <!--			<scope>test</scope>-->
-        <!--		</dependency>-->
 
         <!-- Библиотека для работы с базами данных -->
         <dependency>
@@ -113,6 +108,12 @@
             <artifactId>hibernate-core</artifactId>
             <version>6.5.0.Final</version>
             <type>pom</type>
+        </dependency>
+
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-60</artifactId>
+            <version>3.9.0</version>
         </dependency>
 
         <!-- Драйвер для PostgreSQL -->
@@ -179,7 +180,7 @@
             <version>2.10.1</version>
         </dependency>
 
-        <!-- Библиотека для записи данных в структурном филе JSON-файлов -->
+        <!-- Библиотека для записи данных в структурном виде JSON-файлов -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -189,7 +190,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.16.1</version> <!-- Указать актуальную версию -->
+            <version>2.16.1</version>
         </dependency>
 
         <!-- Библиотека для консольного мониторинга приложения -->

@@ -15,12 +15,6 @@ public class AppSettingService {
                 .orElseThrow(() -> new IllegalStateException("Настройки приложения не найдены"));
     }
 
-//    public void updatePollPeriod(Integer newPeriod) {
-//        AppSetting setting = getAppSetting(); // Получаем единственную запись
-//        setting.setPollPeriod(newPeriod);    // Обновляем значение
-//        appSettingRepository.save(setting);  // Сохраняем в базу
-//    }
-
     public boolean isPollingActive() {
         AppSetting setting = getAppSetting();
         return Boolean.TRUE.equals(setting.getPollActive());

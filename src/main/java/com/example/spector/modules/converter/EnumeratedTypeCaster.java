@@ -1,6 +1,6 @@
 package com.example.spector.modules.converter;
 
-import com.example.spector.database.mongodb.EnumeratedStatusService;
+import com.example.spector.database.postgres.PollingDataService;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
@@ -14,7 +14,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EnumeratedTypeCaster implements TypeCaster<String> {
     private final EventDispatcher eventDispatcher;
-    private final EnumeratedStatusService enumeratedStatusService;
+    private final PollingDataService pollingDataService;
 
     @Override
     public String cast(ParameterDTO parameterDTO, Variable variable) {
@@ -27,7 +27,7 @@ public class EnumeratedTypeCaster implements TypeCaster<String> {
         try {
             int intValue = variable.toInt();
             // Получаем словарь статусов для конкретного параметра
-            Map<Integer, String> statusMap = enumeratedStatusService.getStatusName(parameterDTO.getName());
+            Map<Integer, String> statusMap = pollingDataService.getStatusName(parameterDTO.getName());
 
             return statusMap.getOrDefault(intValue, "UNKNOWN(" + intValue + ")");
         } catch (Exception e) {

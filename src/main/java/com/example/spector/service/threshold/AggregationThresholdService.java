@@ -85,6 +85,7 @@ public class AggregationThresholdService {
                     ParameterShortDTO dto = new ParameterShortDTO();
                     dto.setId(parameter.getId());
                     dto.setName(parameter.getName());
+                    dto.setDescription(parameter.getDescription());
                     dto.setDataType(parameter.getDataType());
 
                     if (parameter.getDataType() == DataType.ENUMERATED) {

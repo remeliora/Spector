@@ -102,9 +102,6 @@ public class AggregationDeviceService {
         dto.setActiveParametersId(activeParameterIds);
 
         return dto;
-//        return deviceRepository.findById(id)
-//                .map(device -> baseDTOConverter.toDTO(device, DeviceDetailDTO.class))
-//                .orElseThrow(() -> new EntityNotFoundException("Device not found"));
     }
 
     public List<DeviceByDeviceTypeDTO> getDevicesByType(Long deviceTypeId) {
@@ -129,10 +126,6 @@ public class AggregationDeviceService {
     // Создание нового устройства
     @Transactional
     public DeviceDetailDTO createDevice(DeviceCreateDTO createDTO) {
-//        Device newDevice = baseDTOConverter.toEntity(createDTO, Device.class);
-//        Device savedDevice = deviceRepository.save(newDevice);
-//
-//        return baseDTOConverter.toDTO(savedDevice, DeviceDetailDTO.class);
         // 1. Проверяем существование типа устройства
         DeviceType deviceType = deviceTypeRepository.findById(createDTO.getDeviceTypeId())
                 .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
@@ -198,12 +191,7 @@ public class AggregationDeviceService {
         existingDevice.setPeriod(updateDTO.getPeriod());
         existingDevice.setAlarmType(updateDTO.getAlarmType());
         existingDevice.setIsEnable(updateDTO.getIsEnable());
-//        if (!existingDevice.getDeviceType().getId().equals(updateDTO.getDeviceTypeId())) {
-//            DeviceType newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
-//                    .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " +
-//                                                                   updateDTO.getDeviceTypeId()));
-//            existingDevice.setDeviceType(newDeviceType);
-//        }
+
         // Обновление типа устройства (если изменился)
         DeviceType newDeviceType = oldDeviceType;
         if (!oldDeviceType.getId().equals(updateDTO.getDeviceTypeId())) {
@@ -268,7 +256,6 @@ public class AggregationDeviceService {
         DeviceDetailDTO result = baseDTOConverter.toDTO(updatedDevice, DeviceDetailDTO.class);
         result.setActiveParametersId(updateDTO.getActiveParametersId());
 
-//        return baseDTOConverter.toDTO(updatedDevice, DeviceDetailDTO.class);
         return result;
     }
 

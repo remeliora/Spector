@@ -12,11 +12,6 @@ public class ParameterHandlerFactory {
     private final EnumeratedParameterHandler enumeratedParameterHandler;
 
     public ParameterHandler getParameterHandler(ParameterDTO parameterDTO) {
-//        if (parameterDTO.getIsEnumeratedStatus()) {
-//            return enumeratedParameterHandler;
-//        } else {
-//            return regularParameterHandler;
-//        }
         DataType dataType = DataType.valueOf(parameterDTO.getDataType());
         return (dataType == DataType.ENUMERATED)
                 ? enumeratedParameterHandler
