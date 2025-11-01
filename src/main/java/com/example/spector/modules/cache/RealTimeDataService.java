@@ -18,6 +18,7 @@ public class RealTimeDataService {
 
     /**
      * Обновляет кэш актуальных данных и публикует событие.
+     *
      * @param deviceId ID устройства.
      * @param snmpData Полные данные, полученные в SnmpPoller (после DAOService.writeData).
      */

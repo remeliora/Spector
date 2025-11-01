@@ -5,7 +5,6 @@ import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 

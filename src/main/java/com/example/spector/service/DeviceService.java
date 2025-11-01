@@ -14,7 +14,6 @@ import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.DeviceTypeRepository;
 import com.example.spector.repositories.ParameterRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -23,10 +22,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

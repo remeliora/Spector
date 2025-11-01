@@ -1,14 +1,11 @@
 package com.example.spector.modules.cache;
 
 import com.example.spector.domain.DeviceCurrentData;
-import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.service.DeviceService;
 import com.example.spector.service.WebSocketNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor

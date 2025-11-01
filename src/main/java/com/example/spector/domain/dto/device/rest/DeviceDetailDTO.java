@@ -2,7 +2,6 @@ package com.example.spector.domain.dto.device.rest;
 
 import com.example.spector.domain.enums.AlarmType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 

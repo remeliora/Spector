@@ -5,7 +5,6 @@ import com.example.spector.domain.dto.enums.EnumDTO;
 import com.example.spector.domain.dto.statusdictionary.StatusDictionaryShortDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;

@@ -244,9 +244,6 @@ public class ParameterService {
 
     // Получение списка устройств как DeviceByDeviceTypeDTO
     private List<DeviceByDeviceTypeDTO> getDevicesByTypeAsDTO(Long deviceTypeId) {
-        DeviceType deviceType = deviceTypeRepository.findById(deviceTypeId)
-                .orElseThrow(() -> new EntityNotFoundException("Device type not found with id: " + deviceTypeId));
-
         List<Device> devices = deviceRepository.findDeviceByDeviceTypeId(deviceTypeId);
 
         return devices.stream()
