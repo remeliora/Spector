@@ -24,13 +24,11 @@ public class DeviceType {
     private String description;
 
     @JsonBackReference(value = "parameterDeviceType")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
-    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private List<Parameter> parameters;
 
     @JsonBackReference(value = "deviceDeviceType")
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL/*, orphanRemoval = true*/)
-    /*@OnDelete(action = OnDeleteAction.CASCADE)*/
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "deviceType", cascade = CascadeType.ALL)
     private List<Device> devices;
 
     @Override

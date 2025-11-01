@@ -33,13 +33,13 @@ public class AppSettingDTO {
     @NotNull(message = "Alarm active status is required")
     Boolean alarmActive;
 
-    @Schema(
-            description = "Период опроса устройств в секундах",
-            example = "30",
-            required = true,
-            minimum = "15"
-    )
-    @NotNull(message = "Poll period is required")
-    @Min(value = 15, message = "Poll period must be at least 15 seconds")
-    Integer pollPeriod;
+//    @Schema(
+//            description = "Период опроса устройств в секундах",
+//            example = "30",
+//            required = true,
+//            minimum = "15"
+//    )
+//    @NotNull(message = "Poll period is required")
+//    @Min(value = 15, message = "Poll period must be at least 15 seconds")
+//    Integer pollPeriod;
 }

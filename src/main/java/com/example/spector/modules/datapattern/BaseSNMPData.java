@@ -1,6 +1,5 @@
 package com.example.spector.modules.datapattern;
 
-import com.example.spector.domain.ParameterData;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import org.springframework.stereotype.Component;

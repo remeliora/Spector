@@ -75,7 +75,7 @@ public class SNMPServiceImpl implements SNMPService {
             };
 
             snmp.send(pdu, target, null, listener);
-            result = futureResult.get(10, TimeUnit.SECONDS);
+            result = futureResult.get(15, TimeUnit.SECONDS);
 
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();

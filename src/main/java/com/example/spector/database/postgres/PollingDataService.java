@@ -5,8 +5,12 @@ import com.example.spector.domain.dto.appsetting.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
 import com.example.spector.domain.dto.threshold.ThresholdDTO;
+import com.example.spector.domain.enums.DataType;
 import com.example.spector.mapper.BaseDTOConverter;
-import com.example.spector.repositories.*;
+import com.example.spector.repositories.AppSettingRepository;
+import com.example.spector.repositories.DeviceRepository;
+import com.example.spector.repositories.ParameterRepository;
+import com.example.spector.repositories.ThresholdRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +26,6 @@ public class PollingDataService {
     private final ParameterRepository parameterRepository;
     private final ThresholdRepository thresholdRepository;
     private final AppSettingRepository appSettingRepository;
-    private final StatusDictionaryRepository statusDictionaryRepository;
 
     private final BaseDTOConverter baseDTOConverter;
 
@@ -30,6 +33,17 @@ public class PollingDataService {
         return appSettingRepository.findFirstBy()
                 .map(appSetting -> baseDTOConverter.toDTO(appSetting, AppSettingDTO.class))
                 .orElseThrow(() -> new RuntimeException("Настройки не найдены"));
+    }
+
+    public AppSetting getAppSettingEntity() {
+        // Используем findFirstBy(), как в AppSettingService
+        return appSettingRepository.findFirstBy().orElse(null);
+    }
+
+    public boolean isPollingActive() {
+        AppSetting setting = getAppSettingEntity();
+        // Возвращаем true по умолчанию, если настройки не найдены или pollActive=null
+        return setting != null && Boolean.TRUE.equals(setting.getPollActive());
     }
 
     public List<DeviceDTO> getDeviceByIsEnableTrue() {
@@ -75,12 +89,24 @@ public class PollingDataService {
                 .collect(Collectors.toList());
     }
 
-    public Map<Integer, String> getStatusName(String name) {
-        Optional<StatusDictionary> statusOpt = statusDictionaryRepository.findStatusDictionaryByName(name);
-        if (statusOpt.isPresent()) {
-            return statusOpt.get().getEnumValues(); // Возвращаем Map из JSONB
+    public Map<Integer, String> getStatusDictionaryForParameter(Long parameterId) {
+        Optional<Parameter> paramOpt = parameterRepository.findById(parameterId);
+
+        if (paramOpt.isPresent()) {
+            Parameter param = paramOpt.get();
+            // Проверяем тип данных
+            if (param.getDataType() == DataType.ENUMERATED) {
+                StatusDictionary dictionary = param.getStatusDictionary();
+                if (dictionary != null) {
+                    return dictionary.getEnumValues();
+                } else {
+                    return Map.of();
+                }
+            } else {
+                return Map.of();
+            }
         }
-        System.out.println("Словарь статусов '" + name + "' не найден в PostgreSQL.");
-        return Map.of(); // Возвращаем пустой Map, если не найден
+
+        return Map.of();
     }
 }

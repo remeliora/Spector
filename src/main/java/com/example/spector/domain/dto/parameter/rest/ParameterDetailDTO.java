@@ -1,6 +1,7 @@
 package com.example.spector.domain.dto.parameter.rest;
 
 import com.example.spector.domain.enums.DataType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -12,33 +13,44 @@ import java.util.List;
 
 @Getter
 @Setter
+@Schema(description = "DTO для детального представления параметра")
 public class ParameterDetailDTO {
+    @Schema(description = "Уникальный идентификатор параметра",
+            example = "1")
     private Long id;
 
-    @NotBlank(message = "Parameter is required")
-    @Size(max = 100, message = "Name cannot exceed 100 characters")
+    @Schema(description = "Наименование параметра",
+            example = "hrPhysicalMemoryUsed")
     private String name;
 
-    @NotBlank(message = "OID is required")
-    @Pattern(regexp = "^\\d+(?:\\.\\d+)*$",
-            message = "Invalid OID format (example: '1.3.6.1.2.1.X')")
+    @Schema(description = "Адрес (OID) параметра",
+            example = "1.3.6.1.2.1.25.2.3.1.5.1")
     private String address;
 
-    @Size(max = 10, message = "Metric cannot exceed 50 characters")
+    @Schema(description = "Единица измерения параметра",
+            example = "Bytes")
     private String metric;
 
-    //    @NotNull(message = "Additive is required")
+    @Schema(description = "Аддитивный коэффициент",
+            example = "0.0")
     private Double additive;
 
-    //    @NotNull(message = "Coefficient is required")
-    //    @DecimalMin(value = "0.0", message = "Coefficient cannot be negative")
+    @Schema(description = "Множитель",
+            example = "1.0")
     private Double coefficient;
 
-    @Size(max = 500, message = "Description cannot exceed 500 characters")
+    @Schema(description = "Описание параметра",
+            example = "Количество используемой оперативной памяти")
     private String description;
 
-    @NotNull(message = "Data Type is required")
+    @Schema(description = "Тип данных параметра")
     private DataType dataType;
 
+    @Schema(description = "Список идентификаторов активных устройств",
+            example = "[1, 2, 4]")
     private List<Long> activeDevicesId;
+
+    @Schema(description = "Идентификатор словаря статуса",
+            example = "1")
+    private Long statusDictionaryId;
 }

@@ -1,8 +1,8 @@
 package com.example.spector.database.dao;
 
-import com.example.spector.database.mongodb.DeviceDataService;
+import com.example.spector.database.mongodb.MongoDataService;
 import com.example.spector.domain.DeviceData;
-import com.example.spector.domain.ParameterData;
+import com.example.spector.modules.datapattern.ParameterData;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,11 +17,11 @@ import java.util.Optional;
 @Qualifier("mongoDBDAO")
 @RequiredArgsConstructor
 public class MongoDBDAO implements DAO {
-    private final DeviceDataService deviceDataService;
+    private final MongoDataService mongoDataService;
 
     @Override
     public void prepareDAO(DeviceDTO deviceDTO) {
-        deviceDataService.createDeviceDataCollection(deviceDTO.getName());
+        mongoDataService.createDeviceDataCollection(deviceDTO.getName());
     }
 
     @Override
@@ -41,7 +41,7 @@ public class MongoDBDAO implements DAO {
         deviceData.setParameters(parameterDataList);
 
         //  Вызываем метод сервиса для создания записи в базе данных MongoDB
-        deviceDataService.saveDeviceData(deviceDTO.getName(), deviceData);
+        mongoDataService.saveDeviceData(deviceDTO.getName(), deviceData);
     }
 
     @Override

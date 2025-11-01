@@ -17,13 +17,10 @@ public class ParameterByDeviceTypeDTO {
             example = "hrPhysicalMemoryUsed",
             required = true,
             maxLength = 100)
-    @NotBlank(message = "Parameter is required")
-    @Size(max = 100, message = "Name cannot exceed 100 characters")
     private String name;
 
     @Schema(description = "Описание параметра",
             example = "Количество используемой оперативной памяти",
             maxLength = 500)
-    @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 }

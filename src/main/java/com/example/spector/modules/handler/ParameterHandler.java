@@ -1,6 +1,6 @@
 package com.example.spector.modules.handler;
 
-import com.example.spector.domain.ResultValue;
+import com.example.spector.modules.datapattern.ResultValue;
 import com.example.spector.domain.dto.appsetting.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;

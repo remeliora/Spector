@@ -18,4 +18,6 @@ public interface ParameterRepository extends JpaRepository<Parameter, Long> {
     boolean existsParameterByIdAndDeviceTypeId(Long id, Long deviceTypeId);
 
     List<Parameter> findParameterByDataType(DataType dataType);
+
+    List<Parameter> findByStatusDictionaryId(Long statusDictionaryId);
 }

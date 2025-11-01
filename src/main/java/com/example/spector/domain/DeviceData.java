@@ -1,5 +1,6 @@
 package com.example.spector.domain;
 
+import com.example.spector.modules.datapattern.ParameterData;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;

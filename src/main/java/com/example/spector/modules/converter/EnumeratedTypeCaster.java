@@ -27,7 +27,7 @@ public class EnumeratedTypeCaster implements TypeCaster<String> {
         try {
             int intValue = variable.toInt();
             // Получаем словарь статусов для конкретного параметра
-            Map<Integer, String> statusMap = pollingDataService.getStatusName(parameterDTO.getName());
+            Map<Integer, String> statusMap = pollingDataService.getStatusDictionaryForParameter(parameterDTO.getId());
 
             return statusMap.getOrDefault(intValue, "UNKNOWN(" + intValue + ")");
         } catch (Exception e) {

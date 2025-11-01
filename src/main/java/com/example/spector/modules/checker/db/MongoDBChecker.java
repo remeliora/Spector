@@ -4,19 +4,16 @@ import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class MongoDBChecker implements DBChecker {
     private final MongoTemplate deviceDataMongoTemplate;
     private final EventDispatcher eventDispatcher;
-
-    public MongoDBChecker(@Qualifier("databaseDeviceDataMongoTemplate") MongoTemplate deviceDataMongoTemplate, EventDispatcher eventDispatcher) {
-        this.deviceDataMongoTemplate = deviceDataMongoTemplate;
-        this.eventDispatcher = eventDispatcher;
-    }
 
     @Override
     public boolean isAccessible(int retryCount) {

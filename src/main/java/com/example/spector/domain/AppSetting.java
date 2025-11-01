@@ -19,7 +19,7 @@ public class AppSetting {
 
     private Boolean alarmActive;
 
-    private Integer pollPeriod;
+//    private Integer pollPeriod;
 
     @Override
     public int hashCode() {

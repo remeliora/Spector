@@ -43,6 +43,12 @@ public class Parameter {
     @Enumerated(EnumType.STRING)
     private DataType dataType;
 
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "status_dictionary_id", referencedColumnName = "id")
+    private StatusDictionary statusDictionary;
+
     @JsonBackReference(value = "parameter")
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parameter", cascade = CascadeType.ALL)
     private List<Threshold> thresholds;
@@ -61,7 +67,7 @@ public class Parameter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Parameter parameter = (Parameter) o;
-        return Objects.equals(id, parameter.id);  // Только по ID
+        return Objects.equals(id, parameter.id);
     }
 
     @Override

@@ -1,33 +1,25 @@
 package com.example.spector.domain.dto.parameter.rest;
 
-import com.example.spector.domain.enums.DataType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "Базовый DTO параметра")
 public class ParameterBaseDTO {
+    @Schema(description = "Уникальный идентификатор параметра", example = "1")
     private Long id;
 
-    @NotBlank(message = "Parameter is required")
-    @Size(max = 100, message = "Name cannot exceed 100 characters")
+    @Schema(description = "Наименование параметра", example = "hrPhysicalMemoryUsed")
     private String name;
 
-    @NotBlank(message = "OID is required")
-    @Pattern(regexp = "^\\d+(?:\\.\\d+)*$",
-            message = "Invalid OID format (example: '1.3.6.1.2.1.X')")
+    @Schema(description = "Адрес (OID) параметра", example = "1.3.6.1.2.1.25.2.3.1.5.1")
     private String address;
 
-    @Size(max = 10, message = "Metric cannot exceed 50 characters")
+    @Schema(description = "Единица измерения параметра", example = "Bytes")
     private String metric;
 
-    @Size(max = 500, message = "Description cannot exceed 500 characters")
+    @Schema(description = "Описание параметра", example = "Количество используемой оперативной памяти")
     private String description;
-
-    @NotNull(message = "Data Type is required")
-    private DataType dataType;
 }

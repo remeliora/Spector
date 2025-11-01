@@ -1,26 +1,28 @@
 package com.example.spector.domain.dto.threshold.rest;
 
-import jakarta.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "DTO для детального представления порога")
 public class ThresholdDetailDTO {
+    @Schema(description = "Уникальный идентификатор порога", example = "1")
     private Long id;
 
-    //    @NotNull(message = "Low Value is required")
+    @Schema(description = "Нижнее пороговое значение", example = "10.5")
     private Double lowValue;
 
-    //    @NotNull(message = "Match Exact is required")
+    @Schema(description = "Точное значение для сравнения (если применимо)", example = "critical")
     private String matchExact;
 
-    //    @NotNull(message = "High Value is required")
+    @Schema(description = "Верхнее пороговое значение", example = "90.0")
     private Double highValue;
 
-    @NotNull(message = "Is Enable Status is required")
+    @Schema(description = "Статус активности порога", example = "true")
     private Boolean isEnable;
 
-    @NotNull(message = "Parameter ID is required")
+    @Schema(description = "Идентификатор связанного параметра", example = "1")
     private Long parameterId;
 }

@@ -1,8 +1,8 @@
 package com.example.spector.modules.polling;
 
 import com.example.spector.database.dao.DAOService;
-import com.example.spector.domain.ParameterData;
-import com.example.spector.domain.ResultValue;
+import com.example.spector.modules.datapattern.ParameterData;
+import com.example.spector.modules.datapattern.ResultValue;
 import com.example.spector.domain.dto.appsetting.AppSettingDTO;
 import com.example.spector.domain.dto.device.DeviceDTO;
 import com.example.spector.domain.dto.parameter.ParameterDTO;
@@ -20,6 +20,7 @@ import com.example.spector.modules.handler.ParameterHandler;
 import com.example.spector.modules.handler.ParameterHandlerFactory;
 import com.example.spector.modules.snmp.SNMPService;
 import com.example.spector.database.postgres.PollingDataService;
+import com.example.spector.modules.cache.RealTimeDataService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
@@ -49,6 +50,7 @@ public class SnmpPoller {
     private final ParameterHandlerFactory parameterHandlerFactory;
     private final BaseSNMPData baseSNMPData;
     private final BaseSNMPStatus baseSNMPStatus;
+    private final RealTimeDataService realTimeDataService;
 
     /**
      * Выполняет один цикл опроса для устройства с указанным ID.
@@ -137,8 +139,10 @@ public class SnmpPoller {
 
         if (isStillEnabledAfterPoll) {
             // 9. Запись результатов (только если устройство всё ещё включено)
-            // Запись данных (в JSON, MongoDB) - это должен быть @Transactional метод DAOService
-            daoService.writeData(currentDevice, snmpData); // Этот метод должен быть @Transactional
+            // Запись данных (в MongoDB)
+            daoService.writeData(currentDevice, snmpData);
+
+            realTimeDataService.updateAndNotify(deviceId, snmpData);
         } else {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.INFO,
                     "Устройство " + currentDeviceAfterPoll.getName() +
