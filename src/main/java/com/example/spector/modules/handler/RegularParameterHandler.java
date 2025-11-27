@@ -42,21 +42,22 @@ public class RegularParameterHandler implements ParameterHandler {
             status = "INACTIVE";
         } else {
             for (ThresholdDTO thresholdDTO : deviceThresholds) {
+                double doubleValue = ((Number) processedValue).doubleValue();
                 double lowValue = thresholdDTO.getLowValue();
                 double highValue = thresholdDTO.getHighValue();
 
-                if ((double) processedValue < lowValue || (double) processedValue > highValue) {
+                if (doubleValue < lowValue || doubleValue > highValue) {
                     status = "ERROR";
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
-                            processedValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
+                            doubleValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
                     eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                            thresholdDTO.getParameter().getName() + " = " + processedValue +
+                            thresholdDTO.getParameter().getName() + " = " + doubleValue +
                             ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
                     eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
                             appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
                             deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
-                            processedValue + " [" + lowValue + "; " + highValue + "]"));
+                            doubleValue + " [" + lowValue + "; " + highValue + "]"));
                 }
             }
         }
@@ -73,10 +74,8 @@ public class RegularParameterHandler implements ParameterHandler {
             case STRING -> {
             }
             default -> {
-//                logger.error("Неподдерживаемый тип данных: {}", dataType);
                 eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                         "Неподдерживаемый тип данных: " + dataType));
-//                deviceLogger.error("Неподдерживаемый тип данных: {}", dataType);
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                         "Неподдерживаемый тип данных: " + dataType));
                 throw new IllegalArgumentException("Неподдерживаемый тип данных: " + dataType);

@@ -4,22 +4,24 @@ import com.example.spector.domain.Device;
 import com.example.spector.domain.DeviceParameterOverride;
 import com.example.spector.domain.DeviceType;
 import com.example.spector.domain.Parameter;
-import com.example.spector.domain.dto.device.rest.*;
+import com.example.spector.domain.dto.device.rest.DeviceByDeviceTypeDTO;
+import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
+import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
+import com.example.spector.domain.dto.device.rest.DeviceUpdateDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
-import com.example.spector.domain.dto.enums.EnumDTO;
-import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.modules.polling.PollingManager;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.DeviceTypeRepository;
 import com.example.spector.repositories.ParameterRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.bson.Document;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,21 +34,21 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DeviceService {
+    private final MongoClient mongoClient;
+    private final MongoTemplate mongoTemplate;
+    private final PollingManager pollingManager;
     private final DeviceRepository deviceRepository;
-    private final BaseDTOConverter baseDTOConverter;
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .enable(SerializationFeature.INDENT_OUTPUT);
     private final ParameterRepository parameterRepository;
     private final DeviceTypeRepository deviceTypeRepository;
+    private final WebSocketNotificationService webSocketNotificationService;
     private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
-    private final PollingManager pollingManager;
-    private final EnumService enumService;
+    private final BaseDTOConverter baseDTOConverter;
 
     // Включить / выключить устройство
     public void setEnable(Long deviceId, boolean enabled) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Устройство не найдено: " + deviceId));
+        boolean wasEnabled = device.getIsEnable();
         device.setIsEnable(enabled);
         deviceRepository.save(device);
 
@@ -54,6 +56,7 @@ public class DeviceService {
             pollingManager.startPolling(deviceId); // Запускаем опрос для включенного устройства
         } else {
             pollingManager.stopPolling(deviceId); // Останавливаем опрос для выключенного устройства
+            webSocketNotificationService.notifyDeviceStatus(deviceId, "DISABLED", false);
         }
     }
 
@@ -159,6 +162,9 @@ public class DeviceService {
         Device existingDevice = deviceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
 
+        // Запоминаем старое имя устройства
+        String oldDeviceName = existingDevice.getName();
+
         // Запоминаем старый тип устройства
         DeviceType oldDeviceType = existingDevice.getDeviceType();
 
@@ -177,9 +183,21 @@ public class DeviceService {
             newDeviceType = deviceTypeRepository.findById(updateDTO.getDeviceTypeId())
                     .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
             existingDevice.setDeviceType(newDeviceType);
+
+            if (existingDevice.getThresholds() != null && !existingDevice.getThresholds().isEmpty()) {
+                // Удаляем все пороги, связанные с устройством
+                // Предполагается, что в репозитории ThresholdRepository есть метод deleteByDeviceId
+                // Если нет, можно использовать deviceRepository.deleteAll(existingDevice.getThresholds())
+                // или обнулить связи вручную и сохранить
+                existingDevice.getThresholds().clear();
+            }
         }
 
         Device updatedDevice = deviceRepository.save(existingDevice);
+
+        if (!oldDeviceName.equals(updateDTO.getName())) {
+            renameMongoCollection(oldDeviceName, updateDTO.getName());
+        }
 
         // 3. Получаем существующие переопределения
         List<DeviceParameterOverride> existingOverrides = deviceParameterOverrideRepository.findByDeviceId(id);
@@ -252,45 +270,33 @@ public class DeviceService {
                 .orElse(false); // или null, если устройство не найдено
     }
 
-    // --- Новый метод для получения устройства с lookups ---
-    public DeviceDetailWithLookupsDTO getDeviceDetailWithLookups(Long deviceId) {
-        // 1. Получаем основные данные устройства
-        DeviceDetailDTO device = getDeviceDetail(deviceId);
-
-        Long deviceTypeId = device.getDeviceTypeId();
-
-        // 2. Получаем lookup-данные
-        List<DeviceTypeShortDTO> deviceTypes = getAvailableDeviceTypes();
-        List<String> locations = getUniqueLocations();
-        List<EnumDTO> alarmTypes = getAllAlarmTypesAsDTO();
-        List<ParameterByDeviceTypeDTO> activeParameters = getParametersByTypeAsDTO(deviceTypeId);
-
-        // 3. Создаём и заполняем DTO вручную
-        DeviceDetailWithLookupsDTO result = new DeviceDetailWithLookupsDTO();
-        result.setDevice(device);
-        result.setDeviceTypes(deviceTypes);
-        result.setLocations(locations);
-        result.setAlarmTypes(alarmTypes);
-        result.setParameters(activeParameters);
-
-        return result;
+    // Вспомогательный метод для формирования имени коллекции по имени устройства
+    private String getCollectionNameForDeviceByName(String deviceName) {
+        // Очищаем имя устройства от недопустимых символов для имени коллекции
+        return deviceName.replaceAll("[^a-zA-Z0-9_-]", "_");
     }
 
-    private List<EnumDTO> getAllAlarmTypesAsDTO() {
-        return enumService.getAlarmTypes();
-    }
+    private void renameMongoCollection(String oldDeviceName, String newDeviceName) {
+        String oldCollectionName = oldDeviceName;
+        String newCollectionName = newDeviceName;
 
-    private List<ParameterByDeviceTypeDTO> getParametersByTypeAsDTO(Long deviceTypeId) {
-        // Получаем DeviceType для проверки существования
-        DeviceType deviceType = deviceTypeRepository.findById(deviceTypeId)
-                .orElseThrow(() -> new EntityNotFoundException("Device type not found with id: " + deviceTypeId));
+        String dbName = mongoTemplate.getDb().getName(); // имя вашей БД
 
-        // Получаем параметры напрямую через репозиторий
-        List<Parameter> parameters = parameterRepository.findParameterByDeviceType(deviceType);
+        // Путь к коллекции: база.коллекция
+        String oldNs = dbName + "." + oldCollectionName;
+        String newNs = dbName + "." + newCollectionName;
 
-        // Конвертируем в DTO
-        return parameters.stream()
-                .map(parameter -> baseDTOConverter.toDTO(parameter, ParameterByDeviceTypeDTO.class))
-                .collect(Collectors.toList());
+        // Выполняем команду в admin базе
+        MongoDatabase adminDb = mongoClient.getDatabase("admin");
+
+        Document command = new Document("renameCollection", oldNs)
+                .append("to", newNs)
+                .append("dropTarget", true);
+
+        try {
+            adminDb.runCommand(command);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to rename collection via admin command", e);
+        }
     }
 }

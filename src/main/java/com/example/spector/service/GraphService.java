@@ -5,6 +5,7 @@ import com.example.spector.domain.DeviceParameterOverride;
 import com.example.spector.domain.Parameter;
 import com.example.spector.domain.dto.device.rest.DeviceWithActiveParametersDTO;
 import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
+import com.example.spector.domain.enums.DataType;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
@@ -18,8 +19,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GraphService {
     private final DeviceRepository deviceRepository;
-    private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
     private final BaseDTOConverter baseDTOConverter;
+    private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
 
     /**
      * Получает список всех устройств с их активными параметрами.
@@ -52,6 +53,8 @@ public class GraphService {
         List<Parameter> activeParameters = deviceParameterOverrideRepository.findByDeviceIdAndIsActiveTrue(device.getId())
                 .stream()
                 .map(DeviceParameterOverride::getParameter) // Получаем сам параметр из переопределения
+                .filter(parameter ->
+                        parameter.getDataType() != DataType.ENUMERATED && parameter.getDataType() != DataType.STRING)
                 .toList();
 
         // 4. Преобразуем активные параметры в DTO

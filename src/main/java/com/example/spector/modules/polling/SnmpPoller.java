@@ -65,8 +65,8 @@ public class SnmpPoller {
 
         MDC.put("deviceName", currentDevice.getName());
 
-        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "Начало опроса устройства"));
+//        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                "Начало опроса устройства"));
 
         // 2. Проверка существования и статуса включения на момент начала опроса
         if (currentDevice == null) {
@@ -80,8 +80,8 @@ public class SnmpPoller {
 
         boolean wasEnabledAtStartOfPoll = currentDevice.getIsEnable();
         if (!wasEnabledAtStartOfPoll) {
-            eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                    "Устройство выключено. Пропуск опроса."));
+//            eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                    "Устройство выключено. Пропуск опроса."));
 
             return;
         }
@@ -153,8 +153,8 @@ public class SnmpPoller {
 
         // 10. Публикация события завершения опроса.
         // Публикуем событие с тем статусом, который был на *момент начала* опроса
-        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "Опрос устройства завершён."));
+//        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                "Опрос устройства завершён."));
     }
 
     /**
@@ -170,8 +170,8 @@ public class SnmpPoller {
 
         // 1. Загрузка параметров устройства
         List<ParameterDTO> parameterDTOList = pollingDataService.getActiveParametersForDevice(device.getId());
-        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "Кол-во параметров: " + parameterDTOList.size()));
+//        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                "Кол-во параметров: " + parameterDTOList.size()));
 
         // 2. Создание и использование SNMP сессии
         try (Snmp snmp = new Snmp(new DefaultUdpTransportMapping())) {
@@ -209,7 +209,8 @@ public class SnmpPoller {
      * @param appSettingDTO     Настройки приложения.
      * @param parameterDataList Список, в который добавляются результаты.
      */
-    private void pollParameter(DeviceDTO device, ParameterDTO parameterDTO, Snmp snmp, AppSettingDTO appSettingDTO, List<ParameterData> parameterDataList) throws IOException {
+    private void pollParameter(DeviceDTO device, ParameterDTO parameterDTO, Snmp snmp,
+                               AppSettingDTO appSettingDTO, List<ParameterData> parameterDataList) throws IOException {
         OID oid = new OID(parameterDTO.getAddress());
         PDU pdu = new PDU();
         pdu.add(new VariableBinding(oid));
@@ -241,8 +242,8 @@ public class SnmpPoller {
         ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
         ResultValue resultValue = parameterHandler.handleParameter(device, parameterDTO, castValue, thresholdDTOList, appSettingDTO);
 
-        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "Параметр - " + parameterDTO.getDescription() + ": " + resultValue.getValue()));
+//        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                "Параметр - " + parameterDTO.getDescription() + ": " + resultValue.getValue()));
 
         parameterData.setValue(resultValue.getValue());
         parameterData.setStatus(resultValue.getStatus());

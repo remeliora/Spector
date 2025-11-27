@@ -119,7 +119,8 @@ public class StatusDictionaryController {
     }
 
     /**
-     * DELETE /api/v1/main/status_dictionaries/{id}
+     * DELETE /api/v1/main/
+     * /{id}
      */
     @Operation(
             summary = "Удалить словарь статусов",

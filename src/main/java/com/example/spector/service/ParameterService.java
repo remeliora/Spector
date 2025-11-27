@@ -1,10 +1,7 @@
 package com.example.spector.service;
 
 import com.example.spector.domain.*;
-import com.example.spector.domain.dto.device.rest.DeviceByDeviceTypeDTO;
-import com.example.spector.domain.dto.enums.EnumDTO;
 import com.example.spector.domain.dto.parameter.rest.*;
-import com.example.spector.domain.dto.statusdictionary.StatusDictionaryShortDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,12 +18,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ParameterService {
-    private final EnumService enumService;
     private final BaseDTOConverter baseDTOConverter;
     private final DeviceRepository deviceRepository;
     private final ParameterRepository parameterRepository;
     private final DeviceTypeRepository deviceTypeRepository;
-    private final StatusDictionaryService statusDictionaryService;
     private final StatusDictionaryRepository statusDictionaryRepository;
     private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
 
@@ -211,43 +206,5 @@ public class ParameterService {
                                               " for device type: " + deviceTypeId);
         }
         parameterRepository.deleteById(parameterId);
-    }
-
-    public ParameterDetailWithLookupsDTO getParameterDetailWithLookups(Long deviceTypeId, Long parameterId) {
-        // 1. Получаем параметр
-        ParameterDetailDTO parameter = getParameterDetails(deviceTypeId, parameterId);
-
-        // 2. Получаем lookup-данные
-        List<EnumDTO> dataTypes = getAllDataTypesAsDTO();
-        List<StatusDictionaryShortDTO> statusDictionaries = getAllStatusDictionariesAsDTO();
-        List<DeviceByDeviceTypeDTO> activeDevices = getDevicesByTypeAsDTO(deviceTypeId);
-
-        // 3. Создаём и заполняем DTO вручную
-        ParameterDetailWithLookupsDTO result = new ParameterDetailWithLookupsDTO();
-        result.setParameter(parameter);
-        result.setDataTypes(dataTypes);
-        result.setStatusDictionaries(statusDictionaries);
-        result.setDevices(activeDevices);
-
-        return result;
-    }
-
-    // Получение списка DataType как EnumDTO
-    private List<EnumDTO> getAllDataTypesAsDTO() {
-        return enumService.getDataTypes();
-    }
-
-    // Получение списка StatusDictionary как StatusDictionaryLookupDTO
-    private List<StatusDictionaryShortDTO> getAllStatusDictionariesAsDTO() {
-        return statusDictionaryService.getAllStatusDictionaries();
-    }
-
-    // Получение списка устройств как DeviceByDeviceTypeDTO
-    private List<DeviceByDeviceTypeDTO> getDevicesByTypeAsDTO(Long deviceTypeId) {
-        List<Device> devices = deviceRepository.findDeviceByDeviceTypeId(deviceTypeId);
-
-        return devices.stream()
-                .map(device -> baseDTOConverter.toDTO(device, DeviceByDeviceTypeDTO.class))
-                .collect(Collectors.toList());
     }
 }

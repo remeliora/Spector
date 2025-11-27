@@ -9,12 +9,8 @@ import java.util.List;
 @Setter
 @Getter
 public class DeviceWithActiveParametersDTO {
-
     private Long id;
-
     private String name;
-
     private String ipAddress;
-
     private List<ParameterByDeviceTypeDTO> parameters;
 }

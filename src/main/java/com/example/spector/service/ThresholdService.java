@@ -8,6 +8,7 @@ import com.example.spector.domain.dto.threshold.rest.ThresholdDetailDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdUpdateDTO;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.ParameterRepository;
 import com.example.spector.repositories.ThresholdRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,7 @@ public class ThresholdService {
     private final DeviceRepository deviceRepository;
     private final ThresholdRepository thresholdRepository;
     private final ParameterRepository parameterRepository;
+    private final DeviceParameterOverrideRepository deviceParameterOverrideRepository;
 
     // Получение списка с фильтрацией
     public List<ThresholdBaseDTO> getThresholdByDevice(Long deviceId) {
@@ -72,9 +75,26 @@ public class ThresholdService {
                 .map(threshold -> threshold.getParameter().getId())
                 .collect(Collectors.toSet());
 
+        // 6. Получаем ID неактивных параметров для данного устройства
+        List<DeviceParameterOverride> deviceOverrides = deviceParameterOverrideRepository
+                .findByDeviceId(deviceId);
+
+        // 7. Создаем мапу для быстрого доступа к активности параметров
+        Map<Long, Boolean> parameterActiveStatus = deviceOverrides.stream()
+                .collect(Collectors.toMap(
+                        override -> override.getParameter().getId(),
+                        DeviceParameterOverride::getIsActive
+                ));
+
         // 6. Фильтруем, сортируем и конвертируем в DTO
         return allParameters.stream()
                 .filter(parameter -> !usedParameterIds.contains(parameter.getId()))
+                .filter(parameter -> {
+                    // Если для параметра есть переопределение, проверяем его активность
+                    // Если переопределения нет, считаем параметр активным (true)
+                    Boolean isActive = parameterActiveStatus.get(parameter.getId());
+                    return isActive == null || isActive; // Если null, то активен, если true, то активен
+                })
                 .sorted(Comparator.comparing(Parameter::getName))
                 .map(parameter -> {
                     ParameterShortDTO dto = new ParameterShortDTO();
@@ -117,15 +137,12 @@ public class ThresholdService {
             }
 
             // Дополнительная проверка, что статус существует
-//            Map<Integer, String> statuses = enumeratedStatusService.getStatusName(parameter.getName());
             StatusDictionary dict = parameter.getStatusDictionary();
             if (dict == null) {
                 throw new IllegalStateException("Status dictionary not assigned to parameter: " + parameter.getName());
             }
 
             // Проверяем, существует ли введённое название статуса
-//            boolean statusExists = statuses.values().stream()
-//                    .anyMatch(status -> status.equalsIgnoreCase(createDTO.getMatchExact()));
             boolean statusExists = dict.getEnumValues().values().stream()
                     .anyMatch(status -> status.equalsIgnoreCase(createDTO.getMatchExact()));
 
@@ -140,7 +157,13 @@ public class ThresholdService {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found with id: " + deviceId));
 
-        Threshold newThreshold = baseDTOConverter.toEntity(createDTO, Threshold.class);
+        Threshold newThreshold = new Threshold();
+        newThreshold.setLowValue(createDTO.getLowValue());
+        newThreshold.setMatchExact(createDTO.getMatchExact());
+        newThreshold.setHighValue(createDTO.getHighValue());
+        newThreshold.setIsEnable(createDTO.getIsEnable());
+        newThreshold.setParameter(parameter);
+
         newThreshold.setDevice(device);
 
         Threshold savedThreshold = thresholdRepository.save(newThreshold);
@@ -169,12 +192,6 @@ public class ThresholdService {
             if (updateDTO.getMatchExact() == null) {
                 throw new IllegalArgumentException("Status value required for ENUM parameter");
             }
-
-//            Map<Integer, String> statuses = enumeratedStatusService.getStatusName(
-//                    existingThreshold.getParameter().getName());
-//
-//            boolean statusExists = statuses.values().stream()
-//                    .anyMatch(status -> status.equalsIgnoreCase(updateDTO.getMatchExact()));
 
             StatusDictionary dict = existingThreshold.getParameter().getStatusDictionary();
             if (dict == null) {

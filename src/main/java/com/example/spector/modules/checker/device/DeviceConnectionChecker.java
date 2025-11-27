@@ -18,11 +18,11 @@ public class DeviceConnectionChecker {
     // Метод проверки доступности по IP
     public boolean isAvailableByIP(String ipAddress) {
         try {
-            boolean reachable = InetAddress.getByName(ipAddress).isReachable(3000);
+            boolean reachable = InetAddress.getByName(ipAddress).isReachable(5000);
             if (!reachable) {
 //                System.out.println("Device " + ipAddress + " is not reachable by IP.");
-                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                        "Устройство " + ipAddress + " не доступно IP."));
+//                eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
+//                        "Устройство " + ipAddress + " не доступно IP."));
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                         "Устройство " + ipAddress + " не доступно IP."));
             }

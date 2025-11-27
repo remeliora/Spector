@@ -15,7 +15,7 @@ public class TaskSchedulerConfig {
         scheduler.setPoolSize(50); // Настройте размер пула под вашу нагрузку (количество устройств)
         scheduler.setThreadNamePrefix("PollerScheduler-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
+        scheduler.setAwaitTerminationSeconds(60);
         return scheduler;
     }
 }

@@ -64,27 +64,6 @@ public class ParameterController {
         return parameterService.getParameterDetails(deviceTypeId, parameterId);
     }
 
-    /**
-     * GET /api/v1/main/device-types/{deviceTypeId}/parameters/{parameterId}/with-lookups
-     */
-    // Получение деталей параметра с дополнительными списками lookups
-    @Operation(summary = "Получить детали параметра с lookup-списками",
-            description = "Возвращает полную информацию о параметре и доступные списки значений для выбора.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Детали параметра с lookup-списками успешно получены",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ParameterDetailWithLookupsDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Параметр или тип устройства не найден", content = @Content)
-    })
-    @GetMapping("/{parameterId}/with-lookups")
-    public ParameterDetailWithLookupsDTO getParameterWithLookups(
-            @Parameter(description = "Идентификатор типа устройства", example = "1", required = true)
-            @PathVariable Long deviceTypeId,
-            @Parameter(description = "Идентификатор параметра", example = "5", required = true)
-            @PathVariable Long parameterId) {
-        return parameterService.getParameterDetailWithLookups(deviceTypeId, parameterId);
-    }
-
     // Создание параметра
     @Operation(summary = "Создать параметр", description = "Создает новый параметр для указанного типа устройства.")
     @ApiResponses(value = {

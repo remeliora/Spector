@@ -2,7 +2,6 @@ package com.example.spector.controller;
 
 import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
-import com.example.spector.domain.dto.device.rest.DeviceDetailWithLookupsDTO;
 import com.example.spector.domain.dto.device.rest.DeviceUpdateDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataBaseDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataDetailDTO;
@@ -148,24 +147,6 @@ public class DeviceMonitoringController {
             @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
             @PathVariable Long deviceId) {
         return deviceService.getDeviceDetail(deviceId);
-    }
-
-    /**
-     * GET /api/v1/main/devices/{deviceId}/with-lookups
-     */
-    @Operation(summary = "Получить детали устройства с доступными справочниками",
-            description = "Возвращает детали устройства и списки доступных справочников для редактирования.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Детали устройства и справочники успешно получены",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = DeviceDetailWithLookupsDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Устройство с указанным ID не найдено")
-    })
-    @GetMapping("/{deviceId}/with-lookups")
-    public DeviceDetailWithLookupsDTO getDeviceDetailWithLookups(
-            @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
-            @PathVariable("deviceId") Long id) {
-        return deviceService.getDeviceDetailWithLookups(id);
     }
 
     // Создание устройства

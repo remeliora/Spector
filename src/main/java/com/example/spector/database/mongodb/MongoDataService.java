@@ -25,7 +25,7 @@ public class MongoDataService {
 
     public void saveDeviceData(String deviceName, DeviceData deviceData) {
         deviceDataMongoTemplate.save(deviceData, deviceName);
-        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
-                "MongoDB: результаты сохранены"));
+//        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
+//                "MongoDB: результаты сохранены"));
     }
 }

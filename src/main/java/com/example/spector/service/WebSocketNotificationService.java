@@ -34,19 +34,6 @@ public class WebSocketNotificationService {
         dto.setDeviceName(currentData.getDeviceName());
         dto.setStatus(currentData.getStatus());
 
-//        List<ParameterDataDTO> paramDTOs = currentData.getParameters().stream()
-//                .map(param -> {
-//                    ParameterDataDTO p = new ParameterDataDTO();
-//                    p.setId(param.getId());
-//                    p.setName(param.getName());
-//                    p.setValue(param.getValue() != null ? param.getValue().toString() : null);
-//                    p.setMetric(param.getMetric());
-//                    p.setDescription(param.getDescription());
-//                    p.setStatus(param.getStatus());
-//                    return p;
-//                })
-//                .collect(Collectors.toList());
-
         // --- Проверка на null ---
         List<ParameterData> params = currentData.getParameters();
         List<ParameterDataDTO> paramDTOs = new ArrayList<>(); // Инициализируем пустым списком
