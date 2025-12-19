@@ -11,10 +11,7 @@ import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.event.ResponseListener;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +35,7 @@ public class SNMPServiceImpl implements SNMPService {
             CommunityTarget<UdpAddress> target = createTarget(ipAddress);
 
             PDU pdu = new PDU();
+            pdu.add(new VariableBinding(new OID("1.3.6.1.2.1.1.3.0")));
             pdu.setType(PDU.GET);
 
             ResponseEvent<?> responseEvent = snmp.send(pdu, target);

@@ -28,7 +28,13 @@ public class MvcConfigurer implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry
                 .addMapping("/**")
-                .allowedOrigins("http://localhost:4200")
+                .allowedOriginPatterns(
+                        "http://localhost:4200",
+                        "http://localhost:8083",
+                        "http://vniiftri-spector.ru",
+                        "https://vniiftri-spector.ru",
+                        "http://vniiftri-spector.ru:*",
+                        "https://vniiftri-spector.ru:*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD")
                 .allowCredentials(true)
                 .allowedHeaders("*")

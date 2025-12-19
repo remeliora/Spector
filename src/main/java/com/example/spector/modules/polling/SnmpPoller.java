@@ -97,7 +97,7 @@ public class SnmpPoller {
 
         try {
             // 5. Проверка доступности по IP
-            if (deviceConnectionChecker.isAvailableByIP(currentDevice.getIpAddress())) {
+            if (snmpService.isAvailableBySNMP(currentDevice.getIpAddress())) {
                 snmpData.put("status", "OK");
 
                 // 6. Выполнение SNMP опроса параметров

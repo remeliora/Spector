@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16.3
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4803
+      POSTGRES_DB: spector
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+  spector:
+    image: spector:latest
+    build:
+      context: .
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/application/logs
+    environment:
+      DB_POSTGRES_DRIVER: ${DB_POSTGRES_DRIVER:-org.postgresql.Driver}
+      DB_POSTGRES_URL: ${DB_POSTGRES_URL:-jdbc:postgresql://postgres:5432/spector}
+      DB_POSTGRES_USERNAME: ${DB_POSTGRES_USERNAME:-postgres}
+      DB_POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD:-4803}
+      FB_DRIVER: ${FB_DRIVER:-org.firebirdsql.jdbc.FBDriver}
+      FB_URL: ${FB_URL:-jdbc:firebirdsql://192.168.1.155:3050/D:/Firebird/DB/EVCH_KHV_20230720145551.fdb?encoding=WIN1251}
+      FB_USERNAME: ${FB_USERNAME:-SYSDBA}
+      FB_PASSWORD: ${FB_PASSWORD:-10v-17stepeni}
+      MONGO_URI: ${MONGO_URI:-mongodb://192.168.1.155:27017}
+      MONGO_DEVICE_DATA_DB: ${MONGO_DEVICE_DATA_DB:-device_data}
+      BOOT_ADMIN_CLIENT_URL: ${BOOT_ADMIN_CLIENT_URL:-http://spector:8080}
+    env_file:
+      - .env
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    depends_on:
+      - postgres
+  frontend:
+    image: spector-frontend:latest
+    build:
+      context: ../SpectorUI
+      dockerfile: Dockerfile
+    ports:
+      - "8083:80"
+    depends_on:
+      - spector
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin/pgpass:/pgadmin4/pgpass
+      - ./backups:/backup
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:80/misc/ping || exit -1
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+    entrypoint: /bin/sh -c "chmod 600 /pgadmin4/pgpass; /entrypoint.sh;"
+volumes:
+  postgres_data:
+
+  pgadmin_data:
+
+
+

@@ -21,7 +21,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/main/status_dictionaries")
+@RequestMapping("/api/v1/main/status-dictionaries")
 @RequiredArgsConstructor
 @Tag(name = "Status Dictionary Management", description = "API для управления словарями статусов")
 public class StatusDictionaryController {
@@ -41,7 +41,7 @@ public class StatusDictionaryController {
     }
 
     /**
-     * GET /api/v1/main/status_dictionaries/{id}
+     * GET /api/v1/main/status-dictionaries/{id}
      */
     @Operation(
             summary = "Получить детали словаря статусов",
@@ -85,12 +85,12 @@ public class StatusDictionaryController {
         StatusDictionaryDetailDTO created = statusDictionaryService.createStatusDictionary(createDTO);
 
         return ResponseEntity
-                .created(URI.create("/api/v1/main/status_dictionaries/" + created.getId()))
+                .created(URI.create("/api/v1/main/status-dictionaries/" + created.getId()))
                 .body(created);
     }
 
     /**
-     * PUT /api/v1/main/status_dictionaries/{id}
+     * PUT /api/v1/main/status-dictionaries/{id}
      */
     @Operation(
             summary = "Обновить словарь статусов",
