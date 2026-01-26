@@ -7,7 +7,11 @@ import com.example.spector.domain.dto.threshold.rest.ThresholdCreateDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdDetailDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdUpdateDTO;
 import com.example.spector.domain.enums.DataType;
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
 import com.example.spector.repositories.ParameterRepository;
@@ -17,10 +21,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,7 +124,8 @@ public class ThresholdService {
 
     // Создание нового порога
     @Transactional
-    public ThresholdDetailDTO createThreshold(Long deviceId, ThresholdCreateDTO createDTO) {
+    public ThresholdDetailDTO createThreshold(Long deviceId, ThresholdCreateDTO createDTO,
+                                              String clientIp, EventDispatcher eventDispatcher) {
         Parameter parameter = parameterRepository.findById(createDTO.getParameterId())
                 .orElseThrow(() -> new EntityNotFoundException("Parameter not found"));
 
@@ -163,17 +165,28 @@ public class ThresholdService {
         newThreshold.setHighValue(createDTO.getHighValue());
         newThreshold.setIsEnable(createDTO.getIsEnable());
         newThreshold.setParameter(parameter);
-
         newThreshold.setDevice(device);
 
         Threshold savedThreshold = thresholdRepository.save(newThreshold);
+
+        String message;
+        if (parameter.getDataType() == DataType.ENUMERATED) {
+            message = String.format("IP %s: User created threshold for device '%s': parameter='%s', matchExact='%s', enabled=%s",
+                    clientIp, device.getName(), parameter.getName(), createDTO.getMatchExact(), createDTO.getIsEnable());
+        } else {
+            message = String.format("IP %s: User created threshold for device '%s': parameter='%s', lowValue=%.2f, highValue=%.2f, enabled=%s",
+                    clientIp, device.getName(), parameter.getName(), createDTO.getLowValue(), createDTO.getHighValue(), createDTO.getIsEnable());
+        }
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
 
         return baseDTOConverter.toDTO(savedThreshold, ThresholdDetailDTO.class);
     }
 
     // Обновление порога
     @Transactional
-    public ThresholdDetailDTO updateThreshold(Long deviceId, Long thresholdId, ThresholdUpdateDTO updateDTO) {
+    public ThresholdDetailDTO updateThreshold(Long deviceId, Long thresholdId, ThresholdUpdateDTO updateDTO,
+                                              String clientIp, EventDispatcher eventDispatcher) {
         // 1. Проверка совпадения ID
         if (!thresholdId.equals(updateDTO.getId())) {
             throw new IllegalArgumentException("ID in path and body must match");
@@ -183,6 +196,12 @@ public class ThresholdService {
         Threshold existingThreshold = thresholdRepository.findThresholdByIdAndDeviceId(thresholdId, deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Threshold not found with id: " + thresholdId +
                                                                " for device: " + deviceId));
+
+        Double oldLowValue = existingThreshold.getLowValue();
+        Double oldHighValue = existingThreshold.getHighValue();
+        String oldMatchExact = existingThreshold.getMatchExact();
+        Boolean oldIsEnable = existingThreshold.getIsEnable();
+        Long oldParameterId = existingThreshold.getParameter().getId();
 
         // 3. Валидация для ENUM-параметров
         if (existingThreshold.getParameter().getDataType() == DataType.ENUMERATED) {
@@ -233,16 +252,49 @@ public class ThresholdService {
 
         Threshold updatedThreshold = thresholdRepository.save(existingThreshold);
 
+        String changes = "";
+        if (!Objects.equals(oldLowValue, updateDTO.getLowValue())) {
+            changes += String.format("lowValue: %.2f -> %.2f, ", oldLowValue, updateDTO.getLowValue());
+        }
+        if (!Objects.equals(oldHighValue, updateDTO.getHighValue())) {
+            changes += String.format("highValue: %.2f -> %.2f, ", oldHighValue, updateDTO.getHighValue());
+        }
+        if (!Objects.equals(oldMatchExact, updateDTO.getMatchExact())) {
+            changes += String.format("matchExact: '%s' -> '%s', ", oldMatchExact, updateDTO.getMatchExact());
+        }
+        if (!Objects.equals(oldIsEnable, updateDTO.getIsEnable())) {
+            changes += String.format("enabled: %s -> %s, ", oldIsEnable, updateDTO.getIsEnable());
+        }
+        if (!Objects.equals(oldParameterId, updateDTO.getParameterId())) {
+            changes += String.format("parameter: %d -> %d, ", oldParameterId, updateDTO.getParameterId());
+        }
+
+        if (!changes.isEmpty()) {
+            changes = changes.substring(0, changes.length() - 2); // Убираем последнюю запятую
+            String message = String.format("IP %s: User updated threshold ID %d: %s",
+                    clientIp, thresholdId, changes);
+            EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+            eventDispatcher.dispatch(event);
+        }
+
         return baseDTOConverter.toDTO(updatedThreshold, ThresholdDetailDTO.class);
     }
 
     // Удаление порога
     @Transactional
-    public void deleteThreshold(Long deviceId, Long thresholdId) {
-        if (!thresholdRepository.existsThresholdByIdAndDeviceId(thresholdId, deviceId)) {
-            throw new EntityNotFoundException("Threshold not found with id: " + thresholdId +
-                                              " for device: " + deviceId);
-        }
+    public void deleteThreshold(Long deviceId, Long thresholdId, String clientIp, EventDispatcher eventDispatcher) {
+        Threshold existingThreshold = thresholdRepository.findThresholdByIdAndDeviceId(thresholdId, deviceId)
+                .orElseThrow(() -> new EntityNotFoundException("Threshold not found with id: " + thresholdId +
+                                                               " for device: " + deviceId));
+
+        String parameterName = existingThreshold.getParameter().getName();
+        String deviceName = existingThreshold.getDevice().getName();
+
         thresholdRepository.deleteById(thresholdId);
+
+        String message = String.format("IP %s: User deleted threshold for device '%s': parameter='%s'",
+                clientIp, deviceName, parameterName);
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
     }
 }

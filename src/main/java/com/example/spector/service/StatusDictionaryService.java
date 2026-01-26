@@ -3,7 +3,11 @@ package com.example.spector.service;
 import com.example.spector.domain.Parameter;
 import com.example.spector.domain.StatusDictionary;
 import com.example.spector.domain.dto.statusdictionary.*;
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import com.example.spector.repositories.ParameterRepository;
 import com.example.spector.repositories.StatusDictionaryRepository;
 import jakarta.transaction.Transactional;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +56,8 @@ public class StatusDictionaryService {
 
     // Создание нового словаря
     @Transactional
-    public StatusDictionaryDetailDTO createStatusDictionary(StatusDictionaryCreateDTO createDTO) {
+    public StatusDictionaryDetailDTO createStatusDictionary(StatusDictionaryCreateDTO createDTO,
+                                                            String clientIp, EventDispatcher eventDispatcher) {
         String name = createDTO.getName();
 
         // Проверяем, существует ли словарь с таким именем
@@ -64,22 +70,47 @@ public class StatusDictionaryService {
 
         StatusDictionary savedDictionary = statusDictionaryRepository.save(newDictionary);
 
+        String message = String.format("IP %s: User created status dictionary: name='%s', values count=%d",
+                clientIp, savedDictionary.getName(), savedDictionary.getEnumValues().size());
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
+
         // Преобразуем сохранённый объект в DTO для возврата
         return baseDTOConverter.toDTO(savedDictionary, StatusDictionaryDetailDTO.class);
     }
 
     // Обновление словаря
     @Transactional
-    public StatusDictionaryDetailDTO updateStatusDictionary(Long id, StatusDictionaryUpdateDTO updateDTO) {
+    public StatusDictionaryDetailDTO updateStatusDictionary(Long id, StatusDictionaryUpdateDTO updateDTO,
+                                                            String clientIp, EventDispatcher eventDispatcher) {
         // Находим существующий словарь по ID
-        StatusDictionary existingDictionary = statusDictionaryRepository.findById(id) // <-- Ищем по ID
+        StatusDictionary existingDictionary = statusDictionaryRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Status Dictionary not found with id: " + id));
 
+        String oldName = existingDictionary.getName();
+        int oldCount = existingDictionary.getEnumValues().size();
+
         // Обновляем поля
-        existingDictionary.setName(updateDTO.getName()); // Можно обновлять имя, если бизнес-логика позволяет
+        existingDictionary.setName(updateDTO.getName());
         existingDictionary.setEnumValues(updateDTO.getEnumValues());
 
         StatusDictionary updatedDictionary = statusDictionaryRepository.save(existingDictionary);
+
+        String changes = "";
+        if (!Objects.equals(oldName, updateDTO.getName())) {
+            changes += String.format("name: '%s' -> '%s', ", oldName, updateDTO.getName());
+        }
+        if (oldCount != updateDTO.getEnumValues().size()) {
+            changes += String.format("values count: %d -> %d, ", oldCount, updateDTO.getEnumValues().size());
+        }
+
+        if (!changes.isEmpty()) {
+            changes = changes.substring(0, changes.length() - 2); // Убираем последнюю запятую
+            String message = String.format("IP %s: User updated status dictionary ID %d: %s",
+                    clientIp, id, changes);
+            EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+            eventDispatcher.dispatch(event);
+        }
 
         // Преобразуем обновлённый объект в DTO для возврата
         return baseDTOConverter.toDTO(updatedDictionary, StatusDictionaryDetailDTO.class);
@@ -87,9 +118,12 @@ public class StatusDictionaryService {
 
     // Удаление словаря
     @Transactional
-    public void deleteStatusDictionary(Long id) {
-        StatusDictionary dictionary = statusDictionaryRepository.findById(id) // <-- Ищем по ID
+    public void deleteStatusDictionary(Long id, String clientIp, EventDispatcher eventDispatcher) {
+        StatusDictionary dictionary = statusDictionaryRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Status Dictionary not found with id: " + id));
+
+        String name = dictionary.getName();
+        int valueCount = dictionary.getEnumValues().size();
 
         // Находим параметры, использующие этот словарь
         List<Parameter> parametersUsingDict = parameterRepository.findByStatusDictionaryId(dictionary.getId());
@@ -102,18 +136,10 @@ public class StatusDictionaryService {
 
         // Удаляем сам словарь
         statusDictionaryRepository.delete(dictionary);
-    }
 
-    // Получение списка StatusDictionary
-    public List<StatusDictionaryShortDTO> getAllStatusDictionaries() {
-        return statusDictionaryRepository.findAll()
-                .stream()
-                .map(sd -> {
-                    StatusDictionaryShortDTO dto = new StatusDictionaryShortDTO();
-                    dto.setId(sd.getId());
-                    dto.setName(sd.getName());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        String message = String.format("IP %s: User deleted status dictionary ID %d: name='%s', values count=%d",
+                clientIp, id, name, valueCount);
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
     }
 }

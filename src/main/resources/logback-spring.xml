@@ -10,6 +10,7 @@
         </encoder>
     </appender>
 
+    <!-- Определяем appender для логов устройств -->
     <appender name="DEVICE_FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
         <discriminator>
             <key>deviceName</key>
@@ -26,6 +27,14 @@
         </sift>
     </appender>
 
+    <!-- Определяем appender для логов запросов -->
+    <appender name="REQUEST_LOG_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/request-trace.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Логируем в консоль -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
@@ -40,6 +49,11 @@
     <!-- Логгер для каждого устройства -->
     <logger name="DeviceLogger" level="INFO" additivity="false">
         <appender-ref ref="DEVICE_FILE"/>
+    </logger>
+
+    <!-- Логгер для запросов -->
+    <logger name="REQUEST_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="REQUEST_LOG_FILE"/>
     </logger>
 
     <!-- Логи веб-сервиса -->

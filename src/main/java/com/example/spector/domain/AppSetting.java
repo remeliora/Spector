@@ -19,8 +19,6 @@ public class AppSetting {
 
     private Boolean alarmActive;
 
-//    private Integer pollPeriod;
-
     @Override
     public int hashCode() {
         return Objects.hash(id);

@@ -1,6 +1,7 @@
 package com.example.spector.controller;
 
 import com.example.spector.domain.dto.parameter.rest.*;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.ParameterService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ import java.util.List;
 @Tag(name = "Parameter Management", description = "API для управления параметрами устройств по типам устройств")
 public class ParameterController {
     private final ParameterService parameterService;
+    private final ClientIpExtractor clientIpExtractor;
+    private final EventDispatcher eventDispatcher;
 
     /**
      * GET /api/v1/main/device-types/{deviceTypeId}/parameters
@@ -80,8 +84,10 @@ public class ParameterController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Данные для создания параметра", required = true,
                     content = @Content(schema = @Schema(implementation = ParameterCreateDTO.class)))
-            @RequestBody @Valid ParameterCreateDTO createDTO) {
-        ParameterDetailDTO createParameter = parameterService.createParameter(deviceTypeId, createDTO);
+            @RequestBody @Valid ParameterCreateDTO createDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        ParameterDetailDTO createParameter = parameterService.createParameter(deviceTypeId, createDTO,
+                clientIp, eventDispatcher);
 
         return ResponseEntity
                 .created(URI.create("/api/v1/main/device-types/" + deviceTypeId
@@ -107,8 +113,10 @@ public class ParameterController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Данные для обновления параметра", required = true,
                     content = @Content(schema = @Schema(implementation = ParameterUpdateDTO.class)))
-            @RequestBody @Valid ParameterUpdateDTO updateDTO) {
-        return parameterService.updateParameter(deviceTypeId, parameterId, updateDTO);
+            @RequestBody @Valid ParameterUpdateDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+
+        return parameterService.updateParameter(deviceTypeId, parameterId, updateDTO, clientIp, eventDispatcher);
     }
 
     // Удаление параметра
@@ -122,8 +130,9 @@ public class ParameterController {
             @Parameter(description = "Идентификатор типа устройства", example = "1", required = true)
             @PathVariable Long deviceTypeId,
             @Parameter(description = "Идентификатор параметра", example = "5", required = true)
-            @PathVariable Long parameterId) {
-        parameterService.deleteParameter(deviceTypeId, parameterId);
+            @PathVariable Long parameterId, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        parameterService.deleteParameter(deviceTypeId, parameterId, clientIp, eventDispatcher);
 
         return ResponseEntity.noContent().build();
     }

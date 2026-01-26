@@ -5,6 +5,8 @@ target/
 !**/src/test/**/target/
 logs/
 data/
+backups/
+docker/
 
 ### STS ###
 .apt_generated

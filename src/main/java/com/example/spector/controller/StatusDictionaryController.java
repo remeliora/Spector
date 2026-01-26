@@ -4,6 +4,7 @@ import com.example.spector.domain.dto.statusdictionary.StatusDictionaryBaseDTO;
 import com.example.spector.domain.dto.statusdictionary.StatusDictionaryCreateDTO;
 import com.example.spector.domain.dto.statusdictionary.StatusDictionaryDetailDTO;
 import com.example.spector.domain.dto.statusdictionary.StatusDictionaryUpdateDTO;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.StatusDictionaryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Status Dictionary Management", description = "API для управления словарями статусов")
 public class StatusDictionaryController {
-    private final StatusDictionaryService statusDictionaryService; // <-- Используем обновлённый сервис
+    private final StatusDictionaryService statusDictionaryService;
+    private final ClientIpExtractor clientIpExtractor;
+    private final EventDispatcher eventDispatcher;
 
     // Получение списка (без изменений)
     @Operation(
@@ -81,8 +85,9 @@ public class StatusDictionaryController {
                     description = "DTO для создания нового словаря статусов",
                     required = true,
                     content = @Content(schema = @Schema(implementation = StatusDictionaryCreateDTO.class)))
-            @RequestBody @Valid StatusDictionaryCreateDTO createDTO) {
-        StatusDictionaryDetailDTO created = statusDictionaryService.createStatusDictionary(createDTO);
+            @RequestBody @Valid StatusDictionaryCreateDTO createDTO,  HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        StatusDictionaryDetailDTO created = statusDictionaryService.createStatusDictionary(createDTO, clientIp, eventDispatcher);
 
         return ResponseEntity
                 .created(URI.create("/api/v1/main/status-dictionaries/" + created.getId()))
@@ -114,8 +119,10 @@ public class StatusDictionaryController {
                     description = "DTO с обновленными данными словаря статусов",
                     required = true,
                     content = @Content(schema = @Schema(implementation = StatusDictionaryDetailDTO.class)))
-            @RequestBody @Valid StatusDictionaryUpdateDTO updateDTO) {
-        return statusDictionaryService.updateStatusDictionary(id, updateDTO);
+            @RequestBody @Valid StatusDictionaryUpdateDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+
+        return statusDictionaryService.updateStatusDictionary(id, updateDTO, clientIp, eventDispatcher);
     }
 
     /**
@@ -135,8 +142,9 @@ public class StatusDictionaryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStatusDictionary(
             @Parameter(description = "ID словаря статусов", required = true, example = "1")
-            @PathVariable Long id) {
-        statusDictionaryService.deleteStatusDictionary(id);
+            @PathVariable Long id, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        statusDictionaryService.deleteStatusDictionary(id, clientIp, eventDispatcher);
 
         return ResponseEntity.noContent().build();
     }

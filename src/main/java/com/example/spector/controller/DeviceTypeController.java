@@ -6,6 +6,7 @@ import com.example.spector.domain.dto.devicetype.rest.DeviceTypeCreateDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeDetailDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeUpdateDTO;
 import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.DeviceTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,8 @@ import java.util.Optional;
 @Tag(name = "Device Types Management", description = "API для управления типами устройств")
 public class DeviceTypeController {
     private final DeviceTypeService deviceTypeService;
+    private final ClientIpExtractor clientIpExtractor;
+    private final EventDispatcher eventDispatcher;
 
     /**
      * GET /api/v1/main/device-types
@@ -125,8 +129,9 @@ public class DeviceTypeController {
                     description = "Данные для создания типа устройства",
                     required = true,
                     content = @Content(schema = @Schema(implementation = DeviceTypeCreateDTO.class)))
-            @RequestBody @Valid DeviceTypeCreateDTO createDTO) {
-        DeviceTypeDetailDTO created = deviceTypeService.createDeviceType(createDTO);
+            @RequestBody @Valid DeviceTypeCreateDTO createDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        DeviceTypeDetailDTO created = deviceTypeService.createDeviceType(createDTO, clientIp, eventDispatcher);
 
         return ResponseEntity
                 .created(URI.create("/api/v1/main/device-types/" + created.getId()))
@@ -150,8 +155,10 @@ public class DeviceTypeController {
                     description = "Новые данные типа устройства",
                     required = true,
                     content = @Content(schema = @Schema(implementation = DeviceTypeDetailDTO.class)))
-            @RequestBody @Valid DeviceTypeUpdateDTO updateDTO) {
-        return deviceTypeService.updateDeviceType(deviceTypeId, updateDTO);
+            @RequestBody @Valid DeviceTypeUpdateDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+
+        return deviceTypeService.updateDeviceType(deviceTypeId, updateDTO, clientIp, eventDispatcher);
     }
 
     @Operation(
@@ -164,8 +171,9 @@ public class DeviceTypeController {
     @DeleteMapping("/{deviceTypeId}")
     public ResponseEntity<Void> deleteDeviceType(
             @Parameter(description = "ID типа устройства", required = true, example = "1")
-            @PathVariable Long deviceTypeId) {
-        deviceTypeService.deleteDeviceType(deviceTypeId);
+            @PathVariable Long deviceTypeId, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        deviceTypeService.deleteDeviceType(deviceTypeId, clientIp, eventDispatcher);
 
         return ResponseEntity.noContent().build();
     }

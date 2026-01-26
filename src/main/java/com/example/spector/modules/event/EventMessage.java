@@ -15,26 +15,19 @@ public class EventMessage {
     private final AlarmType alarmType;
     private final String message;
     private final Integer period;
-//    private final String deviceName;
-
-//    @Singular
-//    private final Map<String, Object> details;
 
     //  Фабричный метод для логов (без лишних аргументов)
-    public static EventMessage log(EventType eventType, MessageType messageType, String message
-            /*, String deviceName*/) {
+    public static EventMessage log(EventType eventType, MessageType messageType, String message) {
         return EventMessage.builder()
                 .eventType(eventType)
                 .messageType(messageType)
                 .message(message)
-//                .deviceName(deviceName)
                 .build();
     }
 
     //  Фабричный метод для базы данных (со всеми аргументами)
     public static EventMessage db(EventType eventType, MessageType messageType, AlarmType alarmType,
-                                  boolean alarmActive, Integer period, String message
-            /*, Map<String, Object> details*/) {
+                                  boolean alarmActive, Integer period, String message) {
         return EventMessage.builder()
                 .eventType(eventType)
                 .messageType(messageType)
@@ -42,7 +35,6 @@ public class EventMessage {
                 .alarmActive(alarmActive)
                 .period(period)
                 .message(message)
-//                .details(details)
                 .build();
     }
 }

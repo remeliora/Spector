@@ -5,6 +5,7 @@ import com.example.spector.domain.dto.threshold.rest.ThresholdBaseDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdCreateDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdDetailDTO;
 import com.example.spector.domain.dto.threshold.rest.ThresholdUpdateDTO;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.ThresholdService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,8 @@ import java.util.List;
 @Tag(name = "Threshold Management", description = "API для управления порогами устройств")
 public class ThresholdController {
     private final ThresholdService thresholdService;
+    private final ClientIpExtractor clientIpExtractor;
+    private final EventDispatcher eventDispatcher;
 
     /**
      * GET /api/v1/main/devices/{deviceId}/thresholds
@@ -106,8 +110,10 @@ public class ThresholdController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = ThresholdCreateDTO.class))
             )
-            @RequestBody @Valid ThresholdCreateDTO createDTO) {
-        ThresholdDetailDTO createThreshold = thresholdService.createThreshold(deviceId, createDTO);
+            @RequestBody @Valid ThresholdCreateDTO createDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        ThresholdDetailDTO createThreshold = thresholdService.createThreshold(deviceId, createDTO,
+                clientIp, eventDispatcher);
 
         return ResponseEntity
                 .created(URI.create("/api/v1/main/devices/" + deviceId
@@ -136,8 +142,10 @@ public class ThresholdController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = ThresholdDetailDTO.class))
             )
-            @RequestBody @Valid ThresholdUpdateDTO updateDTO) {
-        return thresholdService.updateThreshold(deviceId, thresholdId, updateDTO);
+            @RequestBody @Valid ThresholdUpdateDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+
+        return thresholdService.updateThreshold(deviceId, thresholdId, updateDTO, clientIp, eventDispatcher);
     }
 
     // Удаление порога
@@ -152,8 +160,9 @@ public class ThresholdController {
             @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
             @PathVariable Long deviceId,
             @Parameter(description = "Уникальный идентификатор порога", example = "1", required = true)
-            @PathVariable Long thresholdId) {
-        thresholdService.deleteThreshold(deviceId, thresholdId);
+            @PathVariable Long thresholdId, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        thresholdService.deleteThreshold(deviceId, thresholdId, clientIp, eventDispatcher);
 
         return ResponseEntity.noContent().build();
     }

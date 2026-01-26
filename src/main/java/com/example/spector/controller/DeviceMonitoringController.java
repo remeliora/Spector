@@ -6,6 +6,7 @@ import com.example.spector.domain.dto.device.rest.DeviceUpdateDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataBaseDTO;
 import com.example.spector.domain.dto.devicedata.rest.DeviceDataDetailDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.DeviceDataService;
 import com.example.spector.service.DeviceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,8 @@ import java.util.Optional;
 public class DeviceMonitoringController {
     private final DeviceDataService deviceDataService;
     private final DeviceService deviceService;
+    private final ClientIpExtractor clientIpExtractor;
+    private final EventDispatcher eventDispatcher;
 
     /**
      * GET /api/v1/main/devices/monitoring
@@ -107,8 +111,10 @@ public class DeviceMonitoringController {
     @PutMapping("/{deviceId}/enable")
     public ResponseEntity<Void> enableDevice(
             @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
-            @PathVariable("deviceId") Long id) {
-        deviceService.setEnable(id, true);
+            @PathVariable("deviceId") Long id, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        deviceService.setEnable(id, true, clientIp, eventDispatcher);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -125,8 +131,10 @@ public class DeviceMonitoringController {
     @PutMapping("/{deviceId}/disable")
     public ResponseEntity<Void> disableDevice(
             @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
-            @PathVariable("deviceId") Long id) {
-        deviceService.setEnable(id, false);
+            @PathVariable("deviceId") Long id, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        deviceService.setEnable(id, false, clientIp, eventDispatcher);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -165,8 +173,9 @@ public class DeviceMonitoringController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = DeviceCreateDTO.class))
             )
-            @RequestBody DeviceCreateDTO createDTO) {
-        DeviceDetailDTO created = deviceService.createDevice(createDTO);
+            @RequestBody DeviceCreateDTO createDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        DeviceDetailDTO created = deviceService.createDevice(createDTO, clientIp, eventDispatcher);
 
         return ResponseEntity
                 .created(URI.create("/api/v1/main/devices/" + created.getId()))
@@ -192,8 +201,10 @@ public class DeviceMonitoringController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = DeviceUpdateDTO.class))
             )
-            @RequestBody DeviceUpdateDTO updateDTO) {
-        return deviceService.updateDevice(deviceId, updateDTO);
+            @RequestBody DeviceUpdateDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+
+        return deviceService.updateDevice(deviceId, updateDTO, clientIp, eventDispatcher);
     }
 
     // Удаление устройства
@@ -206,8 +217,10 @@ public class DeviceMonitoringController {
     @DeleteMapping("/{deviceId}")
     public ResponseEntity<Void> deleteDevice(
             @Parameter(description = "Уникальный идентификатор устройства", example = "1", required = true)
-            @PathVariable Long deviceId) {
-        deviceService.deleteDevice(deviceId);
+            @PathVariable Long deviceId, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        deviceService.deleteDevice(deviceId, clientIp, eventDispatcher);
+
         return ResponseEntity.noContent().build();
     }
 }

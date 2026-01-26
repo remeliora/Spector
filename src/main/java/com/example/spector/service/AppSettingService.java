@@ -2,7 +2,11 @@ package com.example.spector.service;
 
 import com.example.spector.domain.AppSetting;
 import com.example.spector.domain.dto.appsetting.AppSettingDTO;
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import com.example.spector.modules.polling.PollingManager;
 import com.example.spector.repositories.AppSettingRepository;
 import jakarta.transaction.Transactional;
@@ -19,7 +23,7 @@ public class AppSettingService {
     private final PollingManager pollingManager;
 
     public AppSettingDTO getSettings() {
-        // Получаем первую запись или создаем новую с дефолтными значениями
+        // Получаем первую запись с дефолтными значениями
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElseGet(() -> {
                     AppSetting defaultSettings = new AppSetting();
@@ -32,13 +36,14 @@ public class AppSettingService {
     }
 
     @Transactional
-    public AppSettingDTO updateSettings(AppSettingDTO updateDTO) {
-        // Получаем существующие настройки или создаем новые
+    public AppSettingDTO updateSettings(AppSettingDTO updateDTO, String clientIp, EventDispatcher eventDispatcher) {
+        // Получаем существующие настройки
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElse(new AppSetting());
 
-        // Сохраняем старое значение pollActive для сравнения
+        // Сохраняем старое значение pollActive и AlarmActive для сравнения
         Boolean oldPollActive = settings.getPollActive();
+        Boolean oldAlarmActive = settings.getAlarmActive();
 
         // Обновляем только те поля, которые пришли в DTO
         if (updateDTO.getPollActive() != null) {
@@ -56,8 +61,28 @@ public class AppSettingService {
         if (!Objects.equals(oldPollActive, newPollActive)) {
             if (Boolean.TRUE.equals(newPollActive)) {
                 pollingManager.startAllPolling(); // Запускаем все задачи
+                String message = String.format("IP %s: User enabled polling for all devices", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
             } else {
                 pollingManager.stopAllPolling(); // Останавливаем все задачи
+                String message = String.format("IP %s: User disabled polling for all devices", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
+            }
+        }
+
+        // Проверяем, изменилось ли состояние alarmActive
+        Boolean newAlarmActive = responseDTO.getAlarmActive();
+        if (!Objects.equals(oldAlarmActive, newAlarmActive)) {
+            if (Boolean.TRUE.equals(newAlarmActive)) {
+                String message = String.format("IP %s: User enabled alarms", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
+            } else {
+                String message = String.format("IP %s: User disabled alarms", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
             }
         }
 
@@ -65,7 +90,7 @@ public class AppSettingService {
     }
 
     @Transactional
-    public void resetToDefaults() {
+    public void resetToDefaults(String clientIp, EventDispatcher eventDispatcher) {
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElse(new AppSetting());
 
@@ -80,8 +105,14 @@ public class AppSettingService {
         if (!Objects.equals(oldPollActive, savedSettings.getPollActive())) {
             if (Boolean.TRUE.equals(savedSettings.getPollActive())) {
                 pollingManager.startAllPolling();
+                String message = String.format("IP %s: User reset settings: polling was re-enabled", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
             } else {
                 pollingManager.stopAllPolling();
+                String message = String.format("IP %s: User reset settings: polling was disabled", clientIp);
+                EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+                eventDispatcher.dispatch(event);
             }
         }
     }

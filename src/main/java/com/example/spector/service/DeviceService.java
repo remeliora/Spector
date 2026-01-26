@@ -9,7 +9,12 @@ import com.example.spector.domain.dto.device.rest.DeviceCreateDTO;
 import com.example.spector.domain.dto.device.rest.DeviceDetailDTO;
 import com.example.spector.domain.dto.device.rest.DeviceUpdateDTO;
 import com.example.spector.domain.dto.devicetype.rest.DeviceTypeShortDTO;
+import com.example.spector.domain.enums.AlarmType;
+import com.example.spector.domain.enums.EventType;
+import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.modules.event.EventDispatcher;
+import com.example.spector.modules.event.EventMessage;
 import com.example.spector.modules.polling.PollingManager;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;
 import com.example.spector.repositories.DeviceRepository;
@@ -24,10 +29,7 @@ import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,7 +47,7 @@ public class DeviceService {
     private final BaseDTOConverter baseDTOConverter;
 
     // Включить / выключить устройство
-    public void setEnable(Long deviceId, boolean enabled) {
+    public void setEnable(Long deviceId, boolean enabled, String clientIp, EventDispatcher eventDispatcher) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new EntityNotFoundException("Устройство не найдено: " + deviceId));
         boolean wasEnabled = device.getIsEnable();
@@ -54,9 +56,17 @@ public class DeviceService {
 
         if (enabled) {
             pollingManager.startPolling(deviceId); // Запускаем опрос для включенного устройства
+            String message = String.format("IP %s: User enabled device: name='%s', IP='%s'",
+                    clientIp, device.getName(), device.getIpAddress());
+            EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+            eventDispatcher.dispatch(event);
         } else {
             pollingManager.stopPolling(deviceId); // Останавливаем опрос для выключенного устройства
             webSocketNotificationService.notifyDeviceStatus(deviceId, "DISABLED", false);
+            String message = String.format("IP %s: User disabled device: name='%s', IP='%s'",
+                    clientIp, device.getName(), device.getIpAddress());
+            EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+            eventDispatcher.dispatch(event);
         }
     }
 
@@ -107,7 +117,7 @@ public class DeviceService {
 
     // Создание нового устройства
     @Transactional
-    public DeviceDetailDTO createDevice(DeviceCreateDTO createDTO) {
+    public DeviceDetailDTO createDevice(DeviceCreateDTO createDTO, String clientIp, EventDispatcher eventDispatcher) {
         // 1. Проверяем существование типа устройства
         DeviceType deviceType = deviceTypeRepository.findById(createDTO.getDeviceTypeId())
                 .orElseThrow(() -> new EntityNotFoundException("Device type not found"));
@@ -144,6 +154,12 @@ public class DeviceService {
         // 5. Сохраняем все переопределения
         deviceParameterOverrideRepository.saveAll(overrides);
 
+        String message = String.format("IP %s: User created device: name='%s', IP='%s', type='%s', location='%s'",
+                clientIp, newDevice.getName(), newDevice.getIpAddress(), newDevice.getDeviceType().getName(),
+                newDevice.getLocation());
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
+
         // 6. Возвращаем DTO
         DeviceDetailDTO result = baseDTOConverter.toDTO(savedDevice, DeviceDetailDTO.class);
         result.setActiveParametersId(createDTO.getActiveParametersId());
@@ -153,7 +169,8 @@ public class DeviceService {
 
     // Обновление устройства
     @Transactional
-    public DeviceDetailDTO updateDevice(Long id, DeviceUpdateDTO updateDTO) {
+    public DeviceDetailDTO updateDevice(Long id, DeviceUpdateDTO updateDTO, String clientIp,
+                                        EventDispatcher eventDispatcher) {
         // 1. Проверяем существование устройства
         if (!id.equals(updateDTO.getId())) {
             throw new IllegalArgumentException("ID in path and body must match");
@@ -162,11 +179,15 @@ public class DeviceService {
         Device existingDevice = deviceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Device not found"));
 
-        // Запоминаем старое имя устройства
+        // Запоминаем старые значения
         String oldDeviceName = existingDevice.getName();
-
-        // Запоминаем старый тип устройства
+        String oldIpAddress = existingDevice.getIpAddress();
+        String oldLocation = existingDevice.getLocation();
+        String oldDescription = existingDevice.getDescription();
         DeviceType oldDeviceType = existingDevice.getDeviceType();
+        Integer oldPeriod = existingDevice.getPeriod();
+        AlarmType oldAlarmType = existingDevice.getAlarmType();
+        Boolean oldIsEnable = existingDevice.getIsEnable();
 
         // 2. Обновляем только разрешенные поля
         existingDevice.setName(updateDTO.getName());
@@ -186,17 +207,46 @@ public class DeviceService {
 
             if (existingDevice.getThresholds() != null && !existingDevice.getThresholds().isEmpty()) {
                 // Удаляем все пороги, связанные с устройством
-                // Предполагается, что в репозитории ThresholdRepository есть метод deleteByDeviceId
-                // Если нет, можно использовать deviceRepository.deleteAll(existingDevice.getThresholds())
-                // или обнулить связи вручную и сохранить
                 existingDevice.getThresholds().clear();
             }
         }
 
         Device updatedDevice = deviceRepository.save(existingDevice);
 
-        if (!oldDeviceName.equals(updateDTO.getName())) {
+        String changes = "";
+        if (!Objects.equals(oldDeviceName, updateDTO.getName())) {
+            changes += String.format("name: '%s' -> '%s', ", oldDeviceName, updateDTO.getName());
+            // Переименовываем коллекцию MongoDB
             renameMongoCollection(oldDeviceName, updateDTO.getName());
+        }
+        if (!Objects.equals(oldIpAddress, updateDTO.getIpAddress())) {
+            changes += String.format("IP: '%s' -> '%s', ", oldIpAddress, updateDTO.getIpAddress());
+        }
+        if (!Objects.equals(oldLocation, updateDTO.getLocation())) {
+            changes += String.format("location: '%s' -> '%s', ", oldLocation, updateDTO.getLocation());
+        }
+        if (!Objects.equals(oldDescription, updateDTO.getDescription())) {
+            changes += String.format("description: '%s' -> '%s', ", oldDescription, updateDTO.getDescription());
+        }
+        if (!Objects.equals(oldDeviceType.getId(), newDeviceType.getId())) {
+            changes += String.format("type: '%s' -> '%s', ", oldDeviceType.getName(), newDeviceType.getName());
+        }
+        if (!Objects.equals(oldPeriod, updateDTO.getPeriod())) {
+            changes += String.format("period: %d -> %d, ", oldPeriod, updateDTO.getPeriod());
+        }
+        if (!Objects.equals(oldAlarmType, updateDTO.getAlarmType())) {
+            changes += String.format("alarmType: %s -> %s, ", oldAlarmType, updateDTO.getAlarmType());
+        }
+        if (!Objects.equals(oldIsEnable, updateDTO.getIsEnable())) {
+            changes += String.format("isEnabled: %s -> %s, ", oldIsEnable, updateDTO.getIsEnable());
+        }
+
+        if (!changes.isEmpty()) {
+            changes = changes.substring(0, changes.length() - 2); // Убираем последнюю запятую
+            String message = String.format("IP %s: User updated device ID %d: %s",
+                    clientIp, id, changes);
+            EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+            eventDispatcher.dispatch(event);
         }
 
         // 3. Получаем существующие переопределения
@@ -257,23 +307,25 @@ public class DeviceService {
     }
 
     @Transactional
-    public void deleteDevice(Long id) {
-        if (!deviceRepository.existsById(id)) {
-            throw new IllegalArgumentException("Device not found");
-        }
+    public void deleteDevice(Long id, String clientIp, EventDispatcher eventDispatcher) {
+        Device existingDevice = deviceRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+
+        String name = existingDevice.getName();
+        String ipAddress = existingDevice.getIpAddress();
+
         deviceRepository.deleteById(id);
+
+        String message = String.format("IP %s: User deleted device ID %d: name='%s', IP='%s'",
+                clientIp, id, name, ipAddress);
+        EventMessage event = EventMessage.log(EventType.REQUEST, MessageType.INFO, message);
+        eventDispatcher.dispatch(event);
     }
 
     public Boolean getIsEnable(Long deviceId) {
         return deviceRepository.findById(deviceId)
                 .map(Device::getIsEnable)
                 .orElse(false); // или null, если устройство не найдено
-    }
-
-    // Вспомогательный метод для формирования имени коллекции по имени устройства
-    private String getCollectionNameForDeviceByName(String deviceName) {
-        // Очищаем имя устройства от недопустимых символов для имени коллекции
-        return deviceName.replaceAll("[^a-zA-Z0-9_-]", "_");
     }
 
     private void renameMongoCollection(String oldDeviceName, String newDeviceName) {

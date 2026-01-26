@@ -1,6 +1,7 @@
 package com.example.spector.controller;
 
 import com.example.spector.domain.dto.appsetting.AppSettingDTO;
+import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.AppSettingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Application Settings", description = "API для управления настройками приложения")
 public class AppSettingController {
     private final AppSettingService appSettingService;
+    private final EventDispatcher eventDispatcher;
+    private final ClientIpExtractor clientIpExtractor;
 
     /**
      * GET /api/main/settings
@@ -51,8 +55,11 @@ public class AppSettingController {
                     description = "DTO с обновлёнными значениями настроек",
                     required = true,
                     content = @Content(schema = @Schema(implementation = AppSettingDTO.class)))
-            @RequestBody AppSettingDTO updateDTO) {
-        return ResponseEntity.ok(appSettingService.updateSettings(updateDTO));
+            @RequestBody AppSettingDTO updateDTO, HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        AppSettingDTO result = appSettingService.updateSettings(updateDTO, clientIp, eventDispatcher);
+
+        return ResponseEntity.ok(result);
     }
 
     @Operation(
@@ -63,8 +70,10 @@ public class AppSettingController {
             description = "Настройки сброшены к значениям по умолчанию",
             content = @Content(schema = @Schema(implementation = AppSettingDTO.class)))
     @PostMapping("/reset")
-    public ResponseEntity<AppSettingDTO> resetSettings() {
-        appSettingService.resetToDefaults();
+    public ResponseEntity<AppSettingDTO> resetSettings(HttpServletRequest request) {
+        String clientIp = clientIpExtractor.extract(request);
+        appSettingService.resetToDefaults(clientIp, eventDispatcher);
+
         return ResponseEntity.ok(appSettingService.getSettings());
     }
 }

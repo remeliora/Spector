@@ -1,6 +1,5 @@
 package com.example.spector.modules.event.channels;
 
-import com.example.spector.domain.enums.EventType;
 import com.example.spector.modules.event.EventMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,18 +9,32 @@ import org.springframework.stereotype.Component;
 public class LogChannel implements EventChannel {
     private static final Logger logger = LoggerFactory.getLogger(LogChannel.class);
     private static final Logger deviceLogger = LoggerFactory.getLogger("DeviceLogger");
+    private static final Logger requestLogger = LoggerFactory.getLogger("REQUEST_LOGGER");
 
     @Override
     public void handle(EventMessage event) {
         try {
-            if (event.getEventType() == EventType.SYSTEM) {
-                logSystemEvent(event);
-            } else if (event.getEventType() == EventType.DEVICE /*&& event.getDeviceName() != null*/) {
-//                MDC.put("deviceName", event.getDeviceName());
-                logDeviceEvent(event);
+//            if (event.getEventType() == EventType.SYSTEM) {
+//                logSystemEvent(event);
+//            } else if (event.getEventType() == EventType.DEVICE) {
+//                logDeviceEvent(event);
+//            }
+            switch (event.getEventType()) {
+                case SYSTEM -> logSystemEvent(event);
+                case DEVICE -> logDeviceEvent(event);
+                case REQUEST -> logRequestEvent(event); // Новое событие
+                default -> {
+                }
             }
         } finally {
 //            MDC.clear();
+        }
+    }
+
+    private void logRequestEvent(EventMessage event) {
+        switch (event.getMessageType()) {
+            case INFO -> requestLogger.info(formatMessage(event));
+            case ERROR -> requestLogger.error(formatMessage(event));
         }
     }
 
