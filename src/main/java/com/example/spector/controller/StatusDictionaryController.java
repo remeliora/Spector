@@ -6,13 +6,6 @@ import com.example.spector.domain.statusdictionary.dto.StatusDictionaryDetailDTO
 import com.example.spector.domain.statusdictionary.dto.StatusDictionaryUpdateDTO;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.StatusDictionaryService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +40,7 @@ public class StatusDictionaryController {
 
     @PostMapping
     public ResponseEntity<StatusDictionaryDetailDTO> createStatusDictionary(
-            @RequestBody @Valid StatusDictionaryCreateDTO createDTO,  HttpServletRequest request) {
+            @RequestBody @Valid StatusDictionaryCreateDTO createDTO, HttpServletRequest request) {
         String clientIp = clientIpExtractor.extract(request);
         StatusDictionaryDetailDTO created = statusDictionaryService.createStatusDictionary(createDTO, clientIp, eventDispatcher);
 

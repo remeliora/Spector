@@ -1,8 +1,8 @@
 package com.example.spector.database.mongodb;
 
 import com.example.spector.domain.device.Device;
-import com.example.spector.domain.parameter.Parameter;
 import com.example.spector.domain.devicedata.dto.graph.*;
+import com.example.spector.domain.parameter.Parameter;
 import com.example.spector.domain.parameter.dto.ParameterByDeviceTypeDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;

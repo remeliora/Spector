@@ -1,9 +1,9 @@
 package com.example.spector.database.dao;
 
 import com.example.spector.database.mongodb.MongoDataService;
+import com.example.spector.domain.device.dto.DeviceDTO;
 import com.example.spector.domain.devicedata.DeviceData;
 import com.example.spector.modules.datapattern.ParameterData;
-import com.example.spector.domain.device.dto.DeviceDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
