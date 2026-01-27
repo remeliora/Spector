@@ -1,8 +1,7 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.DeviceType;
-import com.example.spector.domain.Parameter;
-import com.example.spector.domain.enums.DataType;
+import com.example.spector.domain.devicetype.DeviceType;
+import com.example.spector.domain.parameter.Parameter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

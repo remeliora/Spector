@@ -1,10 +1,10 @@
 package com.example.spector.modules.handler;
 
 import com.example.spector.modules.datapattern.ResultValue;
-import com.example.spector.domain.dto.appsetting.AppSettingDTO;
-import com.example.spector.domain.dto.device.DeviceDTO;
-import com.example.spector.domain.dto.parameter.ParameterDTO;
-import com.example.spector.domain.dto.threshold.ThresholdDTO;
+import com.example.spector.domain.setting.dto.AppSettingDTO;
+import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.parameter.dto.ParameterDTO;
+import com.example.spector.domain.threshold.dto.ThresholdDTO;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;

@@ -1,6 +1,6 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.StatusDictionary;
+import com.example.spector.domain.statusdictionary.StatusDictionary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

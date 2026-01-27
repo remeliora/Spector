@@ -1,6 +1,6 @@
 package com.example.spector.controller;
 
-import com.example.spector.domain.dto.enums.EnumDTO;
+import com.example.spector.domain.enums.dto.EnumDTO;
 import com.example.spector.service.EnumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,20 +17,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/main/enums")
 @RequiredArgsConstructor
-@Tag(name = "Enums Management", description = "API для получения значений перечислений (enum)")
 public class EnumController {
     private final EnumService enumService;
 
     /**
      * GET /api/main/enums/alarm-types
      */
-    @Operation(
-            summary = "Получить типы тревог",
-            description = "Возвращает список возможных типов тревог/оповещений")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Список типов тревог успешно получен",
-            content = @Content(schema = @Schema(implementation = EnumDTO.class, type = "array")))
     // Получение значений Enum - Alarm Types
     @GetMapping("/alarm-types")
     public List<EnumDTO> getAlarmTypes() {
@@ -40,13 +32,6 @@ public class EnumController {
     /**
      * GET /api/main/enums/data-types
      */
-    @Operation(
-            summary = "Получить типы данных",
-            description = "Возвращает список возможных типов данных для параметров")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Список типов данных успешно получен",
-            content = @Content(schema = @Schema(implementation = EnumDTO.class, type = "array")))
     // Получение значений Enum - Data Types
     @GetMapping("/data-types")
     public List<EnumDTO> getDataTypes() {

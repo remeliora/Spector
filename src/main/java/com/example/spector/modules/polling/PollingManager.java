@@ -1,7 +1,7 @@
 package com.example.spector.modules.polling;
 
 import com.example.spector.database.postgres.PollingDataService;
-import com.example.spector.domain.dto.device.DeviceDTO;
+import com.example.spector.domain.device.dto.DeviceDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;

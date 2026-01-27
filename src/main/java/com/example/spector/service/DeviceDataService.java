@@ -1,9 +1,9 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.Device;
-import com.example.spector.domain.DeviceCurrentData;
-import com.example.spector.domain.dto.devicedata.rest.DeviceDataBaseDTO;
-import com.example.spector.domain.dto.devicedata.rest.DeviceDataDetailDTO;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.devicedata.dto.DeviceCurrentData;
+import com.example.spector.domain.devicedata.dto.rest.DeviceDataBaseDTO;
+import com.example.spector.domain.devicedata.dto.rest.DeviceDataDetailDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.modules.cache.DeviceCurrentDataCache;
 import com.example.spector.repositories.DeviceRepository;

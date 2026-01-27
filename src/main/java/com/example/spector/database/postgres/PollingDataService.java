@@ -1,11 +1,16 @@
 package com.example.spector.database.postgres;
 
-import com.example.spector.domain.*;
-import com.example.spector.domain.dto.appsetting.AppSettingDTO;
-import com.example.spector.domain.dto.device.DeviceDTO;
-import com.example.spector.domain.dto.parameter.ParameterDTO;
-import com.example.spector.domain.dto.threshold.ThresholdDTO;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.override.DeviceParameterOverride;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.setting.dto.AppSettingDTO;
+import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.parameter.dto.ParameterDTO;
+import com.example.spector.domain.threshold.dto.ThresholdDTO;
 import com.example.spector.domain.enums.DataType;
+import com.example.spector.domain.setting.AppSetting;
+import com.example.spector.domain.statusdictionary.StatusDictionary;
+import com.example.spector.domain.threshold.Threshold;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.AppSettingRepository;
 import com.example.spector.repositories.DeviceRepository;

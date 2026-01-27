@@ -1,10 +1,14 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.*;
-import com.example.spector.domain.dto.parameter.rest.*;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.devicetype.DeviceType;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.domain.override.DeviceParameterOverride;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.parameter.dto.*;
+import com.example.spector.domain.statusdictionary.StatusDictionary;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;

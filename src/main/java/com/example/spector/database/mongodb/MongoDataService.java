@@ -1,6 +1,6 @@
 package com.example.spector.database.mongodb;
 
-import com.example.spector.domain.DeviceData;
+import com.example.spector.domain.devicedata.DeviceData;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;

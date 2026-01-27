@@ -1,10 +1,10 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.Device;
-import com.example.spector.domain.DeviceParameterOverride;
-import com.example.spector.domain.Parameter;
-import com.example.spector.domain.dto.device.rest.DeviceWithActiveParametersDTO;
-import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.override.DeviceParameterOverride;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.device.dto.DeviceWithActiveParametersDTO;
+import com.example.spector.domain.parameter.dto.ParameterByDeviceTypeDTO;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.repositories.DeviceParameterOverrideRepository;

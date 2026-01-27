@@ -1,6 +1,6 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.dto.enums.EnumDTO;
+import com.example.spector.domain.enums.dto.EnumDTO;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.DataType;
 import lombok.RequiredArgsConstructor;

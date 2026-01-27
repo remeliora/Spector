@@ -1,10 +1,10 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.AppSetting;
-import com.example.spector.domain.dto.appsetting.AppSettingDTO;
+import com.example.spector.domain.setting.AppSetting;
+import com.example.spector.domain.setting.AppSettingRestDto;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
-import com.example.spector.mapper.BaseDTOConverter;
+import com.example.spector.mapper.AppSettingMapper;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import com.example.spector.modules.polling.PollingManager;
@@ -19,10 +19,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AppSettingService {
     private final AppSettingRepository appSettingRepository;
-    private final BaseDTOConverter baseDTOConverter;
+//    private final BaseDTOConverter baseDTOConverter;
+    private final AppSettingMapper appSettingMapper;
     private final PollingManager pollingManager;
 
-    public AppSettingDTO getSettings() {
+    public AppSettingRestDto getSettings() {
         // Получаем первую запись с дефолтными значениями
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElseGet(() -> {
@@ -32,11 +33,11 @@ public class AppSettingService {
                     return appSettingRepository.save(defaultSettings);
                 });
 
-        return baseDTOConverter.toDTO(settings, AppSettingDTO.class);
+        return appSettingMapper.toAppSettingDto(settings);
     }
 
     @Transactional
-    public AppSettingDTO updateSettings(AppSettingDTO updateDTO, String clientIp, EventDispatcher eventDispatcher) {
+    public AppSettingRestDto updateSettings(AppSettingRestDto updateDTO, String clientIp, EventDispatcher eventDispatcher) {
         // Получаем существующие настройки
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElse(new AppSetting());
@@ -54,7 +55,7 @@ public class AppSettingService {
         }
 
         AppSetting savedSettings = appSettingRepository.save(settings);
-        AppSettingDTO responseDTO = baseDTOConverter.toDTO(savedSettings, AppSettingDTO.class);
+        AppSettingRestDto responseDTO = appSettingMapper.toAppSettingDto(savedSettings);
 
         // Проверяем, изменилось ли состояние pollActive
         Boolean newPollActive = responseDTO.getPollActive();

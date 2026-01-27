@@ -1,6 +1,6 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.AppSetting;
+import com.example.spector.domain.setting.AppSetting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

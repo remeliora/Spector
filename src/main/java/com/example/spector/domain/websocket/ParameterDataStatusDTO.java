@@ -1,6 +1,6 @@
 package com.example.spector.domain.websocket;
 
-import com.example.spector.domain.dto.parameter.ParameterDataDTO;
+import com.example.spector.domain.parameter.dto.ParameterDataDTO;
 import lombok.Getter;
 import lombok.Setter;
 

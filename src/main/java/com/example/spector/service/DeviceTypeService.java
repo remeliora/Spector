@@ -1,12 +1,12 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.DeviceType;
-import com.example.spector.domain.dto.device.rest.DeviceByDeviceTypeDTO;
-import com.example.spector.domain.dto.devicetype.rest.DeviceTypeBaseDTO;
-import com.example.spector.domain.dto.devicetype.rest.DeviceTypeCreateDTO;
-import com.example.spector.domain.dto.devicetype.rest.DeviceTypeDetailDTO;
-import com.example.spector.domain.dto.devicetype.rest.DeviceTypeUpdateDTO;
-import com.example.spector.domain.dto.parameter.rest.ParameterByDeviceTypeDTO;
+import com.example.spector.domain.devicetype.DeviceType;
+import com.example.spector.domain.device.dto.DeviceByDeviceTypeDTO;
+import com.example.spector.domain.devicetype.dto.DeviceTypeBaseDTO;
+import com.example.spector.domain.devicetype.dto.DeviceTypeCreateDTO;
+import com.example.spector.domain.devicetype.dto.DeviceTypeDetailDTO;
+import com.example.spector.domain.devicetype.dto.DeviceTypeUpdateDTO;
+import com.example.spector.domain.parameter.dto.ParameterByDeviceTypeDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.BaseDTOConverter;

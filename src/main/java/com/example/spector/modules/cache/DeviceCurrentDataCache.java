@@ -1,6 +1,6 @@
 package com.example.spector.modules.cache;
 
-import com.example.spector.domain.DeviceCurrentData;
+import com.example.spector.domain.devicedata.dto.DeviceCurrentData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;

@@ -1,7 +1,7 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.DeviceCurrentData;
-import com.example.spector.domain.dto.parameter.ParameterDataDTO;
+import com.example.spector.domain.devicedata.dto.DeviceCurrentData;
+import com.example.spector.domain.parameter.dto.ParameterDataDTO;
 import com.example.spector.domain.websocket.DeviceDataStatusDTO;
 import com.example.spector.domain.websocket.ParameterDataStatusDTO;
 import com.example.spector.modules.datapattern.ParameterData;

@@ -1,7 +1,7 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.Device;
-import com.example.spector.domain.Threshold;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.threshold.Threshold;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

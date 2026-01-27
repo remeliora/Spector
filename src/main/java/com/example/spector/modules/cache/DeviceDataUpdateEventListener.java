@@ -1,6 +1,6 @@
 package com.example.spector.modules.cache;
 
-import com.example.spector.domain.DeviceCurrentData;
+import com.example.spector.domain.devicedata.dto.DeviceCurrentData;
 import com.example.spector.service.DeviceService;
 import com.example.spector.service.WebSocketNotificationService;
 import lombok.RequiredArgsConstructor;

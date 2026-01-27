@@ -1,7 +1,7 @@
 package com.example.spector.modules.datapattern;
 
-import com.example.spector.domain.dto.device.DeviceDTO;
-import com.example.spector.domain.dto.parameter.ParameterDTO;
+import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.parameter.dto.ParameterDTO;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

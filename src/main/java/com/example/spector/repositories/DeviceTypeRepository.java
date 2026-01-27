@@ -1,6 +1,6 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.DeviceType;
+import com.example.spector.domain.devicetype.DeviceType;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

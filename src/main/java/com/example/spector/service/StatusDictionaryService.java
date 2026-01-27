@@ -1,10 +1,13 @@
 package com.example.spector.service;
 
-import com.example.spector.domain.Parameter;
-import com.example.spector.domain.StatusDictionary;
-import com.example.spector.domain.dto.statusdictionary.*;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.statusdictionary.StatusDictionary;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.domain.statusdictionary.dto.StatusDictionaryBaseDTO;
+import com.example.spector.domain.statusdictionary.dto.StatusDictionaryCreateDTO;
+import com.example.spector.domain.statusdictionary.dto.StatusDictionaryDetailDTO;
+import com.example.spector.domain.statusdictionary.dto.StatusDictionaryUpdateDTO;
 import com.example.spector.mapper.BaseDTOConverter;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;

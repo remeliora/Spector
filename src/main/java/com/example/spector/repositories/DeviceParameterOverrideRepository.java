@@ -1,6 +1,6 @@
 package com.example.spector.repositories;
 
-import com.example.spector.domain.DeviceParameterOverride;
+import com.example.spector.domain.override.DeviceParameterOverride;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
