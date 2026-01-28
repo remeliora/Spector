@@ -1,7 +1,7 @@
 package com.example.spector.modules.datapattern;
 
-import com.example.spector.domain.device.dto.DeviceDTO;
-import com.example.spector.domain.parameter.dto.ParameterDTO;
+import com.example.spector.domain.device.Device;
+import com.example.spector.domain.parameter.Parameter;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -10,23 +10,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class BaseSNMPData {
-    public Map<String, Object> defaultSNMPDeviceData(DeviceDTO deviceDTO) {
+    public Map<String, Object> defaultSNMPDeviceData(Device device) {
         Map<String, Object> snmpData = new ConcurrentHashMap<>();
-        snmpData.put("deviceId", deviceDTO.getId());
-        snmpData.put("deviceName", deviceDTO.getName());
-        snmpData.put("deviceIp", deviceDTO.getIpAddress());
-        snmpData.put("location", deviceDTO.getLocation());
+        snmpData.put("deviceId", device.getId());
+        snmpData.put("deviceName", device.getName());
+        snmpData.put("deviceIp", device.getIpAddress());
+        snmpData.put("location", device.getLocation());
         snmpData.put("lastPollingTime", LocalDateTime.now());
 
         return snmpData;
     }
 
-    public ParameterData defaultSNMPParameterData(ParameterDTO parameterDTO) {
+    public ParameterData defaultSNMPParameterData(Parameter parameter) {
         ParameterData parameterData = new ParameterData();
-        parameterData.setId(parameterDTO.getId());
-        parameterData.setName(parameterDTO.getName());
-        parameterData.setDescription(parameterDTO.getDescription());
-        parameterData.setMetric(parameterDTO.getMetric());
+        parameterData.setId(parameter.getId());
+        parameterData.setName(parameter.getName());
+        parameterData.setDescription(parameter.getDescription());
+        parameterData.setMetric(parameter.getMetric());
 
         return parameterData;
     }

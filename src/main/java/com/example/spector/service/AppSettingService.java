@@ -1,7 +1,7 @@
 package com.example.spector.service;
 
 import com.example.spector.domain.setting.AppSetting;
-import com.example.spector.domain.setting.AppSettingRestDto;
+import com.example.spector.domain.setting.dto.AppSettingDto;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.mapper.AppSettingMapper;
@@ -23,7 +23,7 @@ public class AppSettingService {
     private final AppSettingMapper appSettingMapper;
     private final PollingManager pollingManager;
 
-    public AppSettingRestDto getSettings() {
+    public AppSettingDto getSettings() {
         // Получаем первую запись с дефолтными значениями
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElseGet(() -> {
@@ -37,7 +37,7 @@ public class AppSettingService {
     }
 
     @Transactional
-    public AppSettingRestDto updateSettings(AppSettingRestDto updateDTO, String clientIp, EventDispatcher eventDispatcher) {
+    public AppSettingDto updateSettings(AppSettingDto updateDTO, String clientIp, EventDispatcher eventDispatcher) {
         // Получаем существующие настройки
         AppSetting settings = appSettingRepository.findFirstBy()
                 .orElse(new AppSetting());
@@ -55,7 +55,7 @@ public class AppSettingService {
         }
 
         AppSetting savedSettings = appSettingRepository.save(settings);
-        AppSettingRestDto responseDTO = appSettingMapper.toAppSettingDto(savedSettings);
+        AppSettingDto responseDTO = appSettingMapper.toAppSettingDto(savedSettings);
 
         // Проверяем, изменилось ли состояние pollActive
         Boolean newPollActive = responseDTO.getPollActive();

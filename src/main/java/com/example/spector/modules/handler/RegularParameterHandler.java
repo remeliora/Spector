@@ -1,14 +1,14 @@
 package com.example.spector.modules.handler;
 
-import com.example.spector.modules.datapattern.ResultValue;
-import com.example.spector.domain.setting.dto.AppSettingDTO;
-import com.example.spector.domain.device.dto.DeviceDTO;
-import com.example.spector.domain.parameter.dto.ParameterDTO;
-import com.example.spector.domain.threshold.dto.ThresholdDTO;
+import com.example.spector.domain.device.Device;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.DataType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.setting.AppSetting;
+import com.example.spector.domain.threshold.Threshold;
+import com.example.spector.modules.datapattern.ResultValue;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import lombok.RequiredArgsConstructor;
@@ -22,41 +22,41 @@ public class RegularParameterHandler implements ParameterHandler {
     private final EventDispatcher eventDispatcher;
 
     @Override
-    public ResultValue handleParameter(DeviceDTO deviceDTO, ParameterDTO parameterDTO, Object value,
-                                       List<ThresholdDTO> thresholds, AppSettingDTO appSettingDTO) {
-        DataType dataType = DataType.valueOf(parameterDTO.getDataType());
+    public ResultValue handleParameter(Device device, Parameter parameter, Object value,
+                                       List<Threshold> thresholds, AppSetting appSetting) {
+        DataType dataType = parameter.getDataType();
         // Применяем модификации только для числовых типов
         Object processedValue = (dataType != DataType.STRING)
-                ? applyModifications(dataType, value, parameterDTO.getAdditive(), parameterDTO.getCoefficient())
+                ? applyModifications(dataType, value, parameter.getAdditive(), parameter.getCoefficient())
                 : value;
 
         String status = "OK";
 
         // Фильтруем пороги для текущего устройства
-        List<ThresholdDTO> deviceThresholds = thresholds.stream()
-                .filter(t -> t.getDevice().getId().equals(deviceDTO.getId()))
+        List<Threshold> deviceThresholds = thresholds.stream()
+                .filter(t -> t.getDevice().getId().equals(device.getId()))
                 .toList();
 
         // Если порогов нет для текущего устройства - сразу статус INACTIVE
         if (deviceThresholds.isEmpty()) {
             status = "INACTIVE";
         } else {
-            for (ThresholdDTO thresholdDTO : deviceThresholds) {
+            for (Threshold threshold : deviceThresholds) {
                 double doubleValue = ((Number) processedValue).doubleValue();
-                double lowValue = thresholdDTO.getLowValue();
-                double highValue = thresholdDTO.getHighValue();
+                double lowValue = threshold.getLowValue();
+                double highValue = threshold.getHighValue();
 
                 if (doubleValue < lowValue || doubleValue > highValue) {
                     status = "ERROR";
                     eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
+                            device.getName() + ": " + parameter.getDescription() + " = " +
                             doubleValue + ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
                     eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                            thresholdDTO.getParameter().getName() + " = " + doubleValue +
+                            threshold.getParameter().getName() + " = " + doubleValue +
                             ". Допустимый диапазон [" + lowValue + "; " + highValue + "]"));
                     eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
-                            appSettingDTO.getAlarmActive(), deviceDTO.getPeriod(),
-                            deviceDTO.getName() + ": " + parameterDTO.getDescription() + " = " +
+                            appSetting.getAlarmActive(), device.getPeriod(),
+                            device.getName() + ": " + parameter.getDescription() + " = " +
                             doubleValue + " [" + lowValue + "; " + highValue + "]"));
                 }
             }

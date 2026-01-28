@@ -1,7 +1,7 @@
 package com.example.spector.modules.polling;
 
 import com.example.spector.database.postgres.PollingDataService;
-import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.device.Device;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
 import com.example.spector.modules.event.EventDispatcher;
@@ -47,8 +47,8 @@ public class PollingManager {
 
         // Проверяем, активен ли опрос глобально
         if (pollingDataService.isPollingActive()) {
-            List<DeviceDTO> activeDevices = pollingDataService.getDeviceByIsEnableTrue();
-            for (DeviceDTO device : activeDevices) {
+            List<Device> activeDevices = pollingDataService.getDeviceByIsEnableTrue();
+            for (Device device : activeDevices) {
                 startPolling(device.getId());
             }
         } else {
@@ -72,8 +72,8 @@ public class PollingManager {
         stopAllPolling();
 
         // Получаем активные устройства и запускаем опрос для них
-        List<DeviceDTO> activeDevices = pollingDataService.getDeviceByIsEnableTrue();
-        for (DeviceDTO device : activeDevices) {
+        List<Device> activeDevices = pollingDataService.getDeviceByIsEnableTrue();
+        for (Device device : activeDevices) {
             // Проверяем снова, чтобы убедиться, что isEnable не изменился
             if (Boolean.TRUE.equals(device.getIsEnable()) && pollingDataService.isPollingActive()) {
                 startPolling(device.getId());
@@ -109,7 +109,7 @@ public class PollingManager {
         }
 
         // Используем PollingDataService для получения актуального состояния
-        DeviceDTO device = pollingDataService.getDeviceById(deviceId);
+        Device device = pollingDataService.getDeviceById(deviceId);
         if (device == null || !Boolean.TRUE.equals(device.getIsEnable())) {
             stopPolling(deviceId);
 
@@ -138,7 +138,7 @@ public class PollingManager {
         System.out.println("PollingManager: Перепланирование опроса для устройства: " + deviceId);
 
         // Используем PollingDataService для получения актуального состояния
-        DeviceDTO currentDevice = pollingDataService.getDeviceById(deviceId);
+        Device currentDevice = pollingDataService.getDeviceById(deviceId);
         if (currentDevice == null) {
             stopPolling(deviceId);
 
@@ -162,7 +162,7 @@ public class PollingManager {
             if (task != null && task.isDone()) { // Проверяем, завершена ли задача
                 // Проверяем глобальный статус опроса и статус устройства
                 if (pollingDataService.isPollingActive()) { // Если глобальный опрос ВКЛЮЧЕН
-                    DeviceDTO currentDevice = pollingDataService.getDeviceById(deviceId);
+                    Device currentDevice = pollingDataService.getDeviceById(deviceId);
                     if (currentDevice != null && Boolean.TRUE.equals(currentDevice.getIsEnable())) {
                         int periodSeconds = currentDevice.getPeriod();
                         Runnable nextPollingTask = () -> snmpPoller.pollDevice(deviceId);

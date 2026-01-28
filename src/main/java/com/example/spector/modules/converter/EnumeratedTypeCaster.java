@@ -1,9 +1,9 @@
 package com.example.spector.modules.converter;
 
 import com.example.spector.database.postgres.PollingDataService;
-import com.example.spector.domain.parameter.dto.ParameterDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.domain.parameter.Parameter;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class EnumeratedTypeCaster implements TypeCaster<String> {
     private final PollingDataService pollingDataService;
 
     @Override
-    public String cast(ParameterDTO parameterDTO, Variable variable) {
+    public String cast(Parameter parameter, Variable variable) {
         if (variable == null) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Пустое значение!"));
@@ -27,7 +27,7 @@ public class EnumeratedTypeCaster implements TypeCaster<String> {
         try {
             int intValue = variable.toInt();
             // Получаем словарь статусов для конкретного параметра
-            Map<Integer, String> statusMap = pollingDataService.getStatusDictionaryForParameter(parameterDTO.getId());
+            Map<Integer, String> statusMap = pollingDataService.getStatusDictionaryForParameter(parameter.getId());
 
             return statusMap.getOrDefault(intValue, "UNKNOWN(" + intValue + ")");
         } catch (Exception e) {

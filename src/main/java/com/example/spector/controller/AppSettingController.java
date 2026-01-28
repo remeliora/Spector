@@ -1,6 +1,6 @@
 package com.example.spector.controller;
 
-import com.example.spector.domain.setting.AppSettingRestDto;
+import com.example.spector.domain.setting.dto.AppSettingDto;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.AppSettingService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,21 +17,21 @@ public class AppSettingController {
     private final ClientIpExtractor clientIpExtractor;
 
     @GetMapping
-    public ResponseEntity<AppSettingRestDto> getSettings() {
+    public ResponseEntity<AppSettingDto> getSettings() {
         return ResponseEntity.ok(appSettingService.getSettings());
     }
 
     @PutMapping
-    public ResponseEntity<AppSettingRestDto> updateSettings(
-            @RequestBody AppSettingRestDto updateDTO, HttpServletRequest request) {
+    public ResponseEntity<AppSettingDto> updateSettings(
+            @RequestBody AppSettingDto updateDTO, HttpServletRequest request) {
         String clientIp = clientIpExtractor.extract(request);
-        AppSettingRestDto result = appSettingService.updateSettings(updateDTO, clientIp, eventDispatcher);
+        AppSettingDto result = appSettingService.updateSettings(updateDTO, clientIp, eventDispatcher);
 
         return ResponseEntity.ok(result);
     }
 
     @PostMapping("/reset")
-    public ResponseEntity<AppSettingRestDto> resetSettings(HttpServletRequest request) {
+    public ResponseEntity<AppSettingDto> resetSettings(HttpServletRequest request) {
         String clientIp = clientIpExtractor.extract(request);
         appSettingService.resetToDefaults(clientIp, eventDispatcher);
 

@@ -1,8 +1,8 @@
 package com.example.spector.modules.converter;
 
-import com.example.spector.domain.parameter.dto.ParameterDTO;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
+import com.example.spector.domain.parameter.Parameter;
 import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.modules.event.EventMessage;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ public class DoubleTypeCaster implements TypeCaster<Double> {
     private final EventDispatcher eventDispatcher;
 
     @Override
-    public Double cast(ParameterDTO parameterDTO, Variable variable) {
+    public Double cast(Parameter parameter, Variable variable) {
         if (variable == null) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
                     "Пустое значение!"));

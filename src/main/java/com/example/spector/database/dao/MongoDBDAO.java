@@ -1,7 +1,7 @@
 package com.example.spector.database.dao;
 
 import com.example.spector.database.mongodb.MongoDataService;
-import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.device.Device;
 import com.example.spector.domain.devicedata.DeviceData;
 import com.example.spector.modules.datapattern.ParameterData;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +20,12 @@ public class MongoDBDAO implements DAO {
     private final MongoDataService mongoDataService;
 
     @Override
-    public void prepareDAO(DeviceDTO deviceDTO) {
-        mongoDataService.createDeviceDataCollection(deviceDTO.getName());
+    public void prepareDAO(Device device) {
+        mongoDataService.createDeviceDataCollection(device.getName());
     }
 
     @Override
-    public void writeData(DeviceDTO deviceDTO, Map<String, Object> snmpData) {
+    public void writeData(Device device, Map<String, Object> snmpData) {
         DeviceData deviceData = new DeviceData();
 
         //  Устанавливаем данные из snmpData в объект DeviceData
@@ -41,11 +41,11 @@ public class MongoDBDAO implements DAO {
         deviceData.setParameters(parameterDataList);
 
         //  Вызываем метод сервиса для создания записи в базе данных MongoDB
-        mongoDataService.saveDeviceData(deviceDTO.getName(), deviceData);
+        mongoDataService.saveDeviceData(device.getName(), deviceData);
     }
 
     @Override
-    public Optional<DeviceData> readData(DeviceDTO deviceDTO) {
+    public Optional<DeviceData> readData(Device device) {
         return Optional.empty();
     }
 }

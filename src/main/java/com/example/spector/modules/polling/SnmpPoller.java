@@ -2,13 +2,13 @@ package com.example.spector.modules.polling;
 
 import com.example.spector.database.dao.DAOService;
 import com.example.spector.database.postgres.PollingDataService;
-import com.example.spector.domain.device.dto.DeviceDTO;
+import com.example.spector.domain.device.Device;
 import com.example.spector.domain.enums.AlarmType;
 import com.example.spector.domain.enums.EventType;
 import com.example.spector.domain.enums.MessageType;
-import com.example.spector.domain.parameter.dto.ParameterDTO;
-import com.example.spector.domain.setting.dto.AppSettingDTO;
-import com.example.spector.domain.threshold.dto.ThresholdDTO;
+import com.example.spector.domain.parameter.Parameter;
+import com.example.spector.domain.setting.AppSetting;
+import com.example.spector.domain.threshold.Threshold;
 import com.example.spector.modules.cache.RealTimeDataService;
 import com.example.spector.modules.converter.VariableCaster;
 import com.example.spector.modules.datapattern.BaseSNMPData;
@@ -59,7 +59,7 @@ public class SnmpPoller {
     @Async("taskExecutor")
     public void pollDevice(Long deviceId) {
         // 1. Загрузка актуальной конфигурации устройства из БД
-        DeviceDTO currentDevice = pollingDataService.getDeviceById(deviceId);
+        Device currentDevice = pollingDataService.getDeviceById(deviceId);
 
         MDC.put("deviceName", currentDevice.getName());
 
@@ -88,7 +88,7 @@ public class SnmpPoller {
         daoService.prepareDAO(currentDevice);
 
         // 3. Загрузка настроек приложения
-        AppSettingDTO appSettingDTO = pollingDataService.getAppSetting();
+        AppSetting appSetting = pollingDataService.getAppSetting();
 
         // 4. Подготовка структуры данных устройства
         Map<String, Object> snmpData = baseSNMPData.defaultSNMPDeviceData(currentDevice);
@@ -99,7 +99,7 @@ public class SnmpPoller {
                 snmpData.put("status", "OK");
 
                 // 6. Выполнение SNMP опроса параметров
-                Map<String, Object> additionalData = performSnmpPoll(currentDevice, appSettingDTO);
+                Map<String, Object> additionalData = performSnmpPoll(currentDevice, appSetting);
 
                 // 7. Определение общего статуса устройства
                 List<ParameterData> parameterDataList = (List<ParameterData>) additionalData.get("parameters");
@@ -115,7 +115,7 @@ public class SnmpPoller {
                 eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
                         "Устройство не доступно. Пропуск..."));
                 eventDispatcher.dispatch((EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
-                        appSettingDTO.getAlarmActive(), currentDevice.getPeriod(),
+                        appSetting.getAlarmActive(), currentDevice.getPeriod(),
                         currentDevice.getName() + ": отсутствует соединение с устройством!")));
             }
 
@@ -131,7 +131,7 @@ public class SnmpPoller {
 
         // 8. Проверка статуса устройства ещё раз перед записью.
         // Загружаем актуальное состояние после завершения опроса (успешного или неуспешного)
-        DeviceDTO currentDeviceAfterPoll = pollingDataService.getDeviceById(deviceId);
+        Device currentDeviceAfterPoll = pollingDataService.getDeviceById(deviceId);
         MDC.put("deviceName", currentDeviceAfterPoll.getName());
         boolean isStillEnabledAfterPoll = currentDeviceAfterPoll != null && currentDeviceAfterPoll.getIsEnable();
 
@@ -158,16 +158,16 @@ public class SnmpPoller {
     /**
      * Выполняет SNMP опрос параметров устройства.
      *
-     * @param device        Устройство для опроса.
-     * @param appSettingDTO Настройки приложения.
+     * @param device     Устройство для опроса.
+     * @param appSetting Настройки приложения.
      * @return Map с результатами опроса (например, "parameters": List<ParameterData>).
      * @throws IOException В случае ошибки SNMP.
      */
-    private Map<String, Object> performSnmpPoll(DeviceDTO device, AppSettingDTO appSettingDTO) throws IOException {
+    private Map<String, Object> performSnmpPoll(Device device, AppSetting appSetting) throws IOException {
         List<ParameterData> parameterDataList = new ArrayList<>();
 
         // 1. Загрузка параметров устройства
-        List<ParameterDTO> parameterDTOList = pollingDataService.getActiveParametersForDevice(device.getId());
+        List<Parameter> parameterDTOList = pollingDataService.getActiveParametersForDevice(device.getId());
 //        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
 //                "Кол-во параметров: " + parameterDTOList.size()));
 
@@ -175,13 +175,13 @@ public class SnmpPoller {
         try (Snmp snmp = new Snmp(new DefaultUdpTransportMapping())) {
             snmp.listen();
 
-            for (ParameterDTO parameterDTO : parameterDTOList) {
+            for (Parameter parameter : parameterDTOList) {
                 try {
                     // Вызов метода опроса одного параметра
-                    pollParameter(device, parameterDTO, snmp, appSettingDTO, parameterDataList);
+                    pollParameter(device, parameter, snmp, appSetting, parameterDataList);
                 } catch (Exception e) {
                     // В случае ошибки создаем запись с соответствующим статусом
-                    ParameterData errorParamData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
+                    ParameterData errorParamData = baseSNMPData.defaultSNMPParameterData(parameter);
                     errorParamData.setValue(null);
                     errorParamData.setStatus("ERROR");
                     parameterDataList.add(errorParamData);
@@ -202,29 +202,29 @@ public class SnmpPoller {
      * Выполняет SNMP GET запрос для одного параметра и обрабатывает результат.
      *
      * @param device            Устройство.
-     * @param parameterDTO      Параметр для опроса.
+     * @param parameter         Параметр для опроса.
      * @param snmp              Активная SNMP сессия.
-     * @param appSettingDTO     Настройки приложения.
+     * @param appSetting        Настройки приложения.
      * @param parameterDataList Список, в который добавляются результаты.
      */
-    private void pollParameter(DeviceDTO device, ParameterDTO parameterDTO, Snmp snmp,
-                               AppSettingDTO appSettingDTO, List<ParameterData> parameterDataList) throws IOException {
-        OID oid = new OID(parameterDTO.getAddress());
+    private void pollParameter(Device device, Parameter parameter, Snmp snmp,
+                               AppSetting appSetting, List<ParameterData> parameterDataList) throws IOException {
+        OID oid = new OID(parameter.getAddress());
         PDU pdu = new PDU();
         pdu.add(new VariableBinding(oid));
         pdu.setType(PDU.GET);
 
         VariableBinding result = snmpService.performSnmpGet(device.getIpAddress(), pdu, snmp);
-        ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameterDTO);
+        ParameterData parameterData = baseSNMPData.defaultSNMPParameterData(parameter);
 
         if (result == null || result.getVariable() == null) {
             eventDispatcher.dispatch(EventMessage.log(EventType.SYSTEM, MessageType.ERROR,
-                    device.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
+                    device.getName() + ": " + parameter.getDescription() + " - Данные отсутствуют"));
             eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.ERROR,
-                    parameterDTO.getDescription() + ": данные отсутствуют"));
+                    parameter.getDescription() + ": данные отсутствуют"));
             eventDispatcher.dispatch(EventMessage.db(EventType.DB, MessageType.ERROR, AlarmType.EVERYWHERE,
-                    appSettingDTO.getAlarmActive(), device.getPeriod(),
-                    device.getName() + ": " + parameterDTO.getDescription() + " - Данные отсутствуют"));
+                    appSetting.getAlarmActive(), device.getPeriod(),
+                    device.getName() + ": " + parameter.getDescription() + " - Данные отсутствуют"));
 
             parameterData.setValue(null);
             parameterData.setStatus("NO_DATA");
@@ -234,11 +234,11 @@ public class SnmpPoller {
 
         Variable variable = result.getVariable();
         // Загрузка порогов для параметра
-        List<ThresholdDTO> thresholdDTOList = pollingDataService.getThresholdsByParameterDTOAndIsEnableTrue(parameterDTO);
-        Object castValue = variableCaster.convert(parameterDTO, variable);
+        List<Threshold> thresholdList = pollingDataService.getThresholdsByParameterDTOAndIsEnableTrue(parameter);
+        Object castValue = variableCaster.convert(parameter, variable);
 
-        ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameterDTO);
-        ResultValue resultValue = parameterHandler.handleParameter(device, parameterDTO, castValue, thresholdDTOList, appSettingDTO);
+        ParameterHandler parameterHandler = parameterHandlerFactory.getParameterHandler(parameter);
+        ResultValue resultValue = parameterHandler.handleParameter(device, parameter, castValue, thresholdList, appSetting);
 
 //        eventDispatcher.dispatch(EventMessage.log(EventType.DEVICE, MessageType.INFO,
 //                "Параметр - " + parameterDTO.getDescription() + ": " + resultValue.getValue()));
