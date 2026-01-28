@@ -1,5 +1,6 @@
-package com.example.spector.domain.device;
+package com.example.spector.domain.device.dto;
 
+import com.example.spector.domain.device.Device;
 import com.example.spector.domain.enums.AlarmType;
 import jakarta.validation.constraints.*;
 import lombok.Value;
