@@ -5,17 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Value;
 
-import java.util.Map;
-
 /**
  * DTO for {@link com.example.spector.domain.statusdictionary.StatusDictionary}
  */
 @Value
-public class StatusDictionaryDto {
+public class StatusDictionarySummaryDto {
     @NotNull
     Long id;
     @Size(max = 20)
     @NotBlank
     String name;
-    Map<Integer, String> enumValues;
+    Integer count;
 }

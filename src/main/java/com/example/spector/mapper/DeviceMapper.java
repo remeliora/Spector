@@ -1,7 +1,7 @@
 package com.example.spector.mapper;
 
 import com.example.spector.domain.device.Device;
-import com.example.spector.domain.device.DeviceDto;
+import com.example.spector.domain.device.dto.DeviceDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;

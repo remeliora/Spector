@@ -11,11 +11,10 @@ import java.util.Map;
  * DTO for {@link com.example.spector.domain.statusdictionary.StatusDictionary}
  */
 @Value
-public class StatusDictionaryDto {
-    @NotNull
-    Long id;
+public class StatusDictionaryCreateDtoV1 {
     @Size(max = 20)
     @NotBlank
     String name;
+    @NotNull
     Map<Integer, String> enumValues;
 }

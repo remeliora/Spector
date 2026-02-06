@@ -3,13 +3,14 @@ package com.example.spector.repositories;
 import com.example.spector.domain.devicetype.DeviceType;
 import com.example.spector.domain.parameter.Parameter;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ParameterRepository extends JpaRepository<Parameter, Long> {
+public interface ParameterRepository extends JpaRepository<Parameter, Long>, JpaSpecificationExecutor<Parameter> {
     List<Parameter> findParameterByDeviceType(DeviceType deviceType);
 
     Optional<Parameter> findParameterByIdAndDeviceTypeId(Long id, Long deviceTypeId);
