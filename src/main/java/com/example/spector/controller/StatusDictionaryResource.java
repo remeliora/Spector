@@ -3,7 +3,6 @@ package com.example.spector.controller;
 import com.example.spector.domain.statusdictionary.dto.StatusDictionaryCreateDtoV1;
 import com.example.spector.domain.statusdictionary.dto.StatusDictionaryDto;
 import com.example.spector.domain.statusdictionary.dto.StatusDictionarySummaryDto;
-import com.example.spector.modules.event.EventDispatcher;
 import com.example.spector.service.StatusDictionaryServiceV1;
 import com.example.spector.service.filter.StatusDictionaryFilter;
 import com.fasterxml.jackson.databind.JsonNode;
