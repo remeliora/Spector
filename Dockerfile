@@ -15,8 +15,6 @@ USER spring-user
 
 WORKDIR /application
 
-COPY --chown=spring-user .env /application/.env
-
 COPY --from=layers /application/extracted/dependencies/ ./
 COPY --from=layers /application/extracted/spring-boot-loader/ ./
 COPY --from=layers /application/extracted/snapshot-dependencies/ ./

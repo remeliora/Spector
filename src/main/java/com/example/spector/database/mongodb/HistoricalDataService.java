@@ -12,15 +12,14 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,11 +49,11 @@ public class HistoricalDataService {
                         .collect(Collectors.toList());
             }
 
-            // Используем Instant как есть — уже в UTC
             Instant fromUTC = requestDTO.getFrom();
             Instant toUTC = requestDTO.getTo();
 
-            List<ChartDataPoint> dataPoints = readHistoricalData(
+            // Вызываем умный метод чтения с авто-агрегацией
+            List<ChartDataPoint> dataPoints = readHistoricalDataWithAggregation(
                     deviceName, paramIdsToFetch, fromUTC, toUTC
             );
 
@@ -75,7 +74,7 @@ public class HistoricalDataService {
                 series.setParameterName(paramDTO.getName());
 
                 List<List<Object>> highchartsData = entry.getValue().stream()
-                        .map(point -> List.of(point.getTimestamp(), point.getValue())) // timestamp в UTC
+                        .map(point -> List.of(point.getTimestamp(), point.getValue()))
                         .collect(Collectors.toList());
                 series.setData(highchartsData);
 
@@ -89,41 +88,137 @@ public class HistoricalDataService {
     }
 
     /**
-     * Читает исторические данные для заданных параметров устройства за временной промежуток.
-     *
-     * @param deviceName   Имя устройства.
-     * @param parameterIds Список ID параметров для поиска.
-     * @param fromUTC      Instant начала периода (в UTC) для поиска в MongoDB.
-     * @param toUTC        Instant конца периода (в UTC) для поиска в MongoDB.
-     * @return Список точек данных в формате [timestamp UTC, value, parameterId].
+     * Умный метод чтения: решает, использовать ли агрегацию, исходя из диапазона дат.
+     * Порог: 48 часов (2 суток).
      */
-    private List<ChartDataPoint> readHistoricalData(String deviceName, List<Long> parameterIds, Instant fromUTC, Instant toUTC) {
+    private List<ChartDataPoint> readHistoricalDataWithAggregation(String deviceName, List<Long> parameterIds, Instant fromUTC, Instant toUTC) {
+        if (fromUTC == null || toUTC == null) {
+            return readRawData(deviceName, parameterIds, fromUTC, toUTC);
+        }
+
+        long durationHours = Duration.between(fromUTC, toUTC).toHours();
+
+        // Если период больше 48 часов, включаем агрегацию по часу
+        if (durationHours > 48) {
+            return readAggregatedData(deviceName, parameterIds, fromUTC, toUTC);
+        } else {
+            // Иначе читаем сырые данные для максимальной точности
+            return readRawData(deviceName, parameterIds, fromUTC, toUTC);
+        }
+    }
+
+    /**
+     * Чтение сырых данных (для коротких периодов).
+     * Оригинальная логика с небольшими улучшениями безопасности типов.
+     */
+    private List<ChartDataPoint> readRawData(String deviceName, List<Long> parameterIds, Instant fromUTC, Instant toUTC) {
         Query query = new Query();
+        Criteria criteria = Criteria.where("lastPollingTime");
 
-        Criteria criteria = new Criteria();
-        if (fromUTC != null || toUTC != null) {
-            criteria = Criteria.where("lastPollingTime");
-            if (fromUTC != null) {
-                criteria = criteria.gte(Date.from(fromUTC));
-            }
-            if (toUTC != null) {
-                criteria = criteria.lte(Date.from(toUTC));
-            }
+        if (fromUTC != null) {
+            criteria = criteria.gte(Date.from(fromUTC));
+        }
+        if (toUTC != null) {
+            criteria = criteria.lte(Date.from(toUTC));
         }
 
-        if (criteria.getCriteriaObject().size() > 0) {
-            query.addCriteria(criteria);
-        }
+        query.addCriteria(criteria);
 
-        String collectionName = deviceName;
-        List<Document> documents = mongoTemplate.find(query, Document.class, collectionName);
+        // Опционально: можно добавить лимит, если вдруг запрос слишком большой,
+        // но логика выше должна это предотвращать.
+        // query.limit(50000);
+
+        List<Document> documents = mongoTemplate.find(query, Document.class, deviceName);
+        return parseDocuments(documents, parameterIds);
+    }
+
+    /**
+     * Чтение агрегированных данных (для длинных периодов).
+     * Группирует данные по 1 часу и считает среднее значение (AVG).
+     * Использует MongoDB Aggregation Framework.
+     */
+    private List<ChartDataPoint> readAggregatedData(String deviceName, List<Long> parameterIds, Instant fromUTC, Instant toUTC) {
+        // 1. MATCH: Фильтр по времени
+        Criteria timeCriteria = Criteria.where("lastPollingTime");
+        if (fromUTC != null) timeCriteria = timeCriteria.gte(Date.from(fromUTC));
+        if (toUTC != null) timeCriteria = timeCriteria.lte(Date.from(toUTC));
+
+        MatchOperation match = Aggregation.match(timeCriteria);
+
+        // 2. UNWIND: Раскрываем массив parameters
+        UnwindOperation unwind = Aggregation.unwind("parameters");
+
+        // 3. MATCH: Фильтр по ID параметров
+        MatchOperation filterParams = Aggregation.match(Criteria.where("parameters._id").in(parameterIds));
+
+        // 4. GROUP: Группировка по часу и ID параметра
+        // Мы формируем операцию группировки вручную через Document, чтобы использовать $dateTrunc,
+        // так как стандартный builder не поддерживает сложные выражения в поле _id напрямую.
+
+        // Создаем документ для поля _id группы: { _id: { dateTrunc: ..., paramId: ... } }
+        Document groupIdDoc = new Document();
+        // Добавляем выражение $dateTrunc для округления времени до часа
+        groupIdDoc.append("bucketTime", new Document("$dateTrunc",
+                new Document("date", "$lastPollingTime")
+                        .append("unit", "hour")
+                        .append("timezone", "UTC")));
+        // Добавляем поле параметра
+        groupIdDoc.append("paramId", "$parameters._id");
+
+        // Создаем документ всей операции $group
+        Document groupDoc = new Document("$group", new Document("_id", groupIdDoc)
+                .append("avgValue", new Document("$avg", "$parameters.value"))
+        );
+
+        // Превращаем Document в AggregationOperation
+        AggregationOperation groupOp = context -> groupDoc;
+
+        // 5. PROJECT: Формирование итогового вида (вытаскиваем поля из _id)
+        ProjectionOperation project = Aggregation.project()
+                .andExpression("_id.bucketTime").as("timestamp")
+                .and("avgValue").as("value")
+                .and("_id.paramId").as("parameterId");
+
+        Aggregation aggregation = Aggregation.newAggregation(match, unwind, filterParams, groupOp, project);
+
+        // Выполнение
+        AggregationResults<Document> results = mongoTemplate.aggregate(aggregation, deviceName, Document.class);
 
         List<ChartDataPoint> points = new ArrayList<>();
+        for (Document doc : results.getMappedResults()) {
+            Object tsObj = doc.get("timestamp");
+            Long timestamp = null;
+
+            if (tsObj instanceof Date) {
+                timestamp = ((Date) tsObj).getTime();
+            } else if (tsObj instanceof Long) {
+                timestamp = (Long) tsObj;
+            } else if (tsObj instanceof Number) {
+                timestamp = ((Number) tsObj).longValue();
+            }
+
+            Number valNum = (Number) doc.get("value");
+            // paramId лежит в поле parameterId благодаря проекции
+            Long paramId = doc.getLong("parameterId");
+
+            if (timestamp != null && valNum != null && paramId != null) {
+                points.add(new ChartDataPoint(timestamp, valNum.doubleValue(), paramId));
+            }
+        }
+
+        points.sort(Comparator.comparingLong(ChartDataPoint::getTimestamp));
+        return points;
+    }
+
+    /**
+     * Вспомогательный метод парсинга сырых документов.
+     */
+    private List<ChartDataPoint> parseDocuments(List<Document> documents, List<Long> parameterIds) {
+        List<ChartDataPoint> points = new ArrayList<>();
+
         for (Document doc : documents) {
             Date date = doc.getDate("lastPollingTime");
             if (date == null) continue;
-
-            // Получаем timestamp в UTC (в миллисекундах)
             Long timestamp = date.getTime();
 
             List<Map<String, Object>> params = (List<Map<String, Object>>) doc.get("parameters");
@@ -135,14 +230,15 @@ public class HistoricalDataService {
                 Long paramId = idNumber.longValue();
 
                 if (parameterIds.contains(paramId)) {
-                    Object value = param.get("value");
-                    // Создаём точку с timestamp в UTC
-                    points.add(new ChartDataPoint(timestamp, value, paramId));
+                    Object valueObj = param.get("value");
+                    if (valueObj instanceof Number) {
+                        points.add(new ChartDataPoint(timestamp, ((Number) valueObj).doubleValue(), paramId));
+                    }
                 }
             }
         }
 
-        points.sort((a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
+        points.sort(Comparator.comparingLong(ChartDataPoint::getTimestamp));
         return points;
     }
 }

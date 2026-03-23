@@ -41,7 +41,7 @@ services:
 #      - FB_PASSWORD=10v-17stepeni
       - FB_PASSWORD=masterkey
 #      - MONGO_URI=mongodb://192.168.1.155:27017
-      - MONGO_URI=mongodb://localhost:27017
+      - MONGO_URI=mongodb://host.docker.internal:27017
       - MONGO_DEVICE_DATA_DB=device_data
       - BOOT_ADMIN_CLIENT_URL=http://spector:8080
     healthcheck:
